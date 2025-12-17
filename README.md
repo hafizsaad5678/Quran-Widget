@@ -1,50 +1,111 @@
-# Welcome to your Expo app 👋
+# Quran Daily Ayah
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A minimal Expo app that displays one Quran ayah per day with 12 daily push notifications (every 2 hours).
 
-## Get started
+## Features
 
-1. Install dependencies
+- **Offline-first**: All data stored locally in JSON
+- **Date-based Selection**: Same ayah shown throughout the day (deterministic, no randomness)
+- **Push Notifications**: 12 notifications per day at 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22 hours
+- **Same Ayah Everywhere**: Same ayah appears on home screen and in all notifications
+- **Minimal UI**: Clean, centered design with Arabic text and translation
+- **Single Screen**: No navigation, just the daily ayah
+- **No Backend**: Completely offline, no API calls
 
-   ```bash
-   npm install
-   ```
+## Project Structure
 
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+quran-daily-ayah/
+├── app/
+│   └── index.js              # Entry point (expo-router)
+├── src/
+│   ├── screens/
+│   │   └── HomeScreen.js     # Main screen component
+│   └── utils/
+│       ├── getDailyAyah.js   # Logic to select ayah by day
+│       └── notifications.js  # Notification setup and scheduling
+├── assets/
+│   └── ayat/
+│       └── daily_50_ayat.json # 50 Quran ayat data
+└── App.js                     # Root layout
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## How It Works
 
-## Learn more
+### Daily Ayah Selection
+- Uses day of year (1-365) modulo 50 to select an ayah
+- Same ayah shown for entire day
+- No randomness, deterministic selection
 
-To learn more about developing your project with Expo, look at the following resources:
+### Notifications
+- Requests permission on first launch
+- Schedules 12 notifications per day (every 2 hours)
+- Each notification shows today's ayah translation
+- Uses Expo Notifications (no backend required)
+- Notifications repeat daily at the same times
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Setup
 
-## Join the community
+1. Install dependencies:
+```bash
+cd quran-daily-ayah
+npm install
+```
 
-Join our community of developers creating universal apps.
+2. Start the app:
+```bash
+npm start
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+3. On first launch, grant notification permissions when prompted
+
+## Run Commands
+
+```bash
+# Start the app (choose platform when prompted)
+npm start
+
+# Start for Android
+npm run android
+
+# Start for iOS
+npm run ios
+
+# Start for Web
+npm run web
+```
+
+## Data Format
+
+Each ayah in `daily_50_ayat.json` contains:
+- `id`: Unique identifier
+- `surah`: Chapter name
+- `ayah`: Verse number
+- `arabic`: Arabic text
+- `translation`: English translation
+
+## Technologies
+
+- React Native
+- Expo
+- expo-router (navigation)
+- expo-notifications (push notifications)
+- AsyncStorage (permission tracking)
+
+## Notification Schedule
+
+Notifications are sent at:
+- 00:00 (midnight)
+- 02:00
+- 04:00
+- 06:00
+- 08:00
+- 10:00
+- 12:00 (noon)
+- 14:00
+- 16:00
+- 18:00
+- 20:00
+- 22:00
+
+Each notification contains the same daily ayah translation.
