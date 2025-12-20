@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="0dp"
+    android:background="@drawable/widget_background_gradient">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <!-- Header with Icon -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:id="@+id/widget_icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="☪"
+                android:textSize="20sp"
+                android:textColor="#D4AF37"
+                android:layout_marginEnd="8dp" />
+
+            <TextView
+                android:id="@+id/widget_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="DAILY AYAH"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="#D4AF37"
+                android:letterSpacing="0.1" />
+
+            <TextView
+                android:id="@+id/widget_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Updates every 5h"
+                android:textSize="9sp"
+                android:textColor="#999999" />
+
+        </LinearLayout>
+
+        <!-- Arabic Text with Shadow -->
+        <TextView
+            android:id="@+id/ayah_arabic"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="لَا يُكَلِّفُ اللَّهُ نَفْسًا إِلَّا وُسْعَهَا"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="#1a1a1a"
+            android:gravity="right"
+            android:layout_marginBottom="16dp"
+            android:lineSpacingMultiplier="1.9"
+            android:shadowColor="#40000000"
+            android:shadowDx="0"
+            android:shadowDy="1"
+            android:shadowRadius="2" />
+
+        <!-- Decorative Divider -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginBottom="16dp">
+
+            <View
+                android:layout_width="30dp"
+                android:layout_height="1dp"
+                android:background="#D4AF37" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="✦"
+                android:textSize="10sp"
+                android:textColor="#D4AF37"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp" />
+
+            <View
+                android:layout_width="30dp"
+                android:layout_height="1dp"
+                android:background="#D4AF37" />
+
+        </LinearLayout>
+
+        <!-- Translation -->
+        <TextView
+            android:id="@+id/ayah_translation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Allah does not burden a soul beyond what it can bear."
+            android:textSize="13sp"
+            android:textColor="#555555"
+            android:gravity="center"
+            android:layout_marginBottom="16dp"
+            android:lineSpacingMultiplier="1.6"
+            android:fontFamily="sans-serif-light" />
+
+        <!-- Surah and Ayah Info with Background -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:background="#20D4AF37"
+            android:padding="10dp"
+            android:layout_marginTop="160dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="SURAH"
+                    android:textSize="9sp"
+                    android:textColor="#999999"
+                    android:letterSpacing="0.1"
+                    android:layout_marginBottom="2dp" />
+
+                <TextView
+                    android:id="@+id/ayah_surah"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Al-Baqarah"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:textColor="#1a1a1a" />
+
+            </LinearLayout>
+
+            <View
+                android:layout_width="1dp"
+                android:layout_height="30dp"
+                android:background="#D4AF37" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="AYAH"
+                    android:textSize="9sp"
+                    android:textColor="#999999"
+                    android:letterSpacing="0.1"
+                    android:layout_marginBottom="2dp" />
+
+                <TextView
+                    android:id="@+id/ayah_number"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="286"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:textColor="#1a1a1a" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</RelativeLayout>
