@@ -1,53 +1,53 @@
 import React from "react";
-import { View, Text } from "react-native";
-import Svg, { Circle } from "react-native-svg";
+import { Text, View } from "react-native";
 
-const CircularProgress = ({ size = 200, strokeWidth = 15, progress = 0.7, label = "5/7", sublabel = "DAYS" }) => {
-  const radius = (size - strokeWidth) / 2;
-  const circumference = radius * 2 * Math.PI;
-  const strokeDashoffset = circumference - progress * circumference;
+/**
+ * CircularProgress — pure React Native, no SVG dependency.
+ * Renders a ring using a border trick with rotation.
+ */
+const CircularProgress = ({
+  size = 180,
+  strokeWidth = 14,
+  progress = 0,
+  label = "0/7",
+  sublabel = "DAYS",
+}) => {
+  const clampedProgress = Math.min(1, Math.max(0, progress));
+  const segments = 20;
+  const filled = Math.round(clampedProgress * segments);
 
   return (
-    <View className="items-center justify-center" style={{ width: size, height: size }}>
-      <Svg width={size} height={size} style={{ transform: [{ rotate: "-90deg" }] }}>
-        {/* Background Circle */}
-        <Circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke="#fdf9f3" // Base background color or variant
-          strokeWidth={strokeWidth}
-          fill="transparent"
-          style={{ opacity: 0.1 }}
-        />
-        {/* Progress Circle (Track) */}
-        <Circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke="#b0926a" // sanctuary-accent/10 roughly
-          strokeWidth={strokeWidth}
-          fill="transparent"
-          strokeOpacity={0.1}
-        />
-        {/* Progress Arc */}
-        <Circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke="#b0926a" // sanctuary-accent
-          strokeWidth={strokeWidth}
-          fill="transparent"
-          strokeDasharray={circumference}
-          strokeDashoffset={strokeDashoffset}
-          strokeLinecap="round"
-        />
-      </Svg>
-      <View className="absolute items-center justify-center">
-        <Text className="text-4xl font-bold text-sanctuary-text dark:text-sanctuary-text-dark">
+    <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
+      {/* Ring made of segments */}
+      {Array.from({ length: segments }).map((_, i) => {
+        const angle = (i / segments) * 360;
+        const isActive = i < filled;
+        const rad = (angle * Math.PI) / 180;
+        const r = (size - strokeWidth) / 2;
+        const cx = size / 2 + r * Math.sin(rad) - strokeWidth / 2;
+        const cy = size / 2 - r * Math.cos(rad) - strokeWidth / 2;
+        return (
+          <View
+            key={i}
+            style={{
+              position: "absolute",
+              width: strokeWidth,
+              height: strokeWidth,
+              borderRadius: strokeWidth / 2,
+              backgroundColor: isActive ? "#b0926a" : "rgba(176,146,106,0.15)",
+              left: cx,
+              top: cy,
+            }}
+          />
+        );
+      })}
+
+      {/* Center label */}
+      <View style={{ alignItems: "center" }}>
+        <Text style={{ fontSize: 36, fontWeight: "700", color: "#b0926a" }}>
           {label}
         </Text>
-        <Text className="text-xs font-bold text-sanctuary-text-muted dark:text-sanctuary-text-mutedDark uppercase tracking-[2px]">
+        <Text style={{ fontSize: 10, fontWeight: "700", color: "#aaa", letterSpacing: 2, marginTop: 2 }}>
           {sublabel}
         </Text>
       </View>

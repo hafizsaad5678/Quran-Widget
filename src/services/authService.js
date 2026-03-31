@@ -1,8 +1,12 @@
 import { supabase } from './supabaseClient';
 
-export const signUp = async (email, password) => {
+export const signUp = async (email, password, displayName) => {
   if (!supabase) throw new Error('Supabase not configured');
-  return supabase.auth.signUp({ email, password });
+  return supabase.auth.signUp({
+    email,
+    password,
+    options: { data: { display_name: displayName } },
+  });
 };
 
 export const signIn = async (email, password) => {
@@ -22,6 +26,6 @@ export const getCurrentUser = async () => {
 };
 
 export const onAuthStateChange = (callback) => {
-  if (!supabase) return { data: { subscription: { unsubscribe: () => {} } } };
+  if (!supabase) return { data: { subscription: { unsubscribe: () => { } } } };
   return supabase.auth.onAuthStateChange(callback);
 };

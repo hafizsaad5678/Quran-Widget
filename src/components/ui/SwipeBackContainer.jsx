@@ -5,7 +5,7 @@ import { PanResponder, View } from "react-native";
 export default function SwipeBackContainer({
   children,
   enabled = true,
-  threshold = 90,
+  threshold = 60,
 }) {
   const router = useRouter();
 
@@ -13,16 +13,16 @@ export default function SwipeBackContainer({
     PanResponder.create({
       onMoveShouldSetPanResponder: (_evt, gesture) => {
         if (!enabled) return false;
-        const isHorizontal =
-          Math.abs(gesture.dx) > 18 && Math.abs(gesture.dy) < 16;
-        const isEdgeStart = gesture.x0 < 28;
-        return isHorizontal && isEdgeStart;
+        return (
+          Math.abs(gesture.dx) > 10 &&
+          Math.abs(gesture.dy) < 20 &&
+          gesture.x0 < 50 &&
+          gesture.dx > 0
+        );
       },
       onPanResponderRelease: (_evt, gesture) => {
         if (!enabled) return;
-        const shouldGoBack =
-          gesture.dx > threshold && Math.abs(gesture.dy) < 40;
-        if (shouldGoBack) {
+        if (gesture.dx > threshold && Math.abs(gesture.dy) < 60) {
           router.back();
         }
       },
@@ -30,7 +30,7 @@ export default function SwipeBackContainer({
   ).current;
 
   return (
-    <View className="flex-1" {...panResponder.panHandlers}>
+    <View style={{ flex: 1 }} {...panResponder.panHandlers}>
       {children}
     </View>
   );

@@ -1,6 +1,6 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Alert,
   ScrollView,
@@ -11,13 +11,14 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import GlassCard from "../components/ui/GlassCard";
+import SwipeBackContainer from "../components/ui/SwipeBackContainer";
 import TopBar from "../components/ui/TopBar";
+import { TRANSLATION_OPTIONS } from "../constants/translations";
+import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
-import {
-  getCurrentUser,
-  onAuthStateChange,
-  signOut,
-} from "../services/authService";
+import { signOut } from "../services/authService";
+import { updateReminderWindow } from "../services/notificationService";
+import { useAppStore } from "../store/useAppStore";
 
 const SegmentedControl = ({ options, activeValue, onSelect, theme }) => (
   <View
@@ -57,29 +58,24 @@ const SegmentedControl = ({ options, activeValue, onSelect, theme }) => (
 export default function SettingsScreen() {
   const router = useRouter();
   const { themeMode, setThemeMode, theme } = useTheme();
+  const { user, displayName } = useAuth();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [user, setUser] = useState(null);
 
   const translationKey = useAppStore((s) => s.settings.translationKey);
   const updateSettings = useAppStore((s) => s.updateSettings);
+  const reminderSettings = useAppStore((s) => s.settings.reminderSettings);
 
-  useEffect(() => {
-    let mounted = true;
-    getCurrentUser().then((u) => {
-      if (mounted) setUser(u);
-    });
+  // Notification time options shown in the picker
+  const REMINDER_OPTIONS = [
+    { label: "Morning (8:00 AM)", value: "morning", icon: "weather-sunny" },
+    { label: "Afternoon (1:00 PM)", value: "afternoon", icon: "weather-partly-cloudy" },
+    { label: "Evening (7:00 PM)", value: "evening", icon: "weather-night" },
+  ];
 
-    const {
-      data: { subscription },
-    } = onAuthStateChange((event, session) => {
-      if (mounted) setUser(session?.user || null);
-    });
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, []);
+  const handleReminderChange = async (window) => {
+    updateSettings({ reminderSettings: { ...reminderSettings, window } });
+    await updateReminderWindow(window);
+  };
 
   const handleThemeChange = (mode) => {
     setThemeMode(mode);
@@ -95,6 +91,7 @@ export default function SettingsScreen() {
   };
 
   return (
+    <SwipeBackContainer>
     <SafeAreaView
       className="flex-1"
       style={{ backgroundColor: theme.background }}
@@ -103,8 +100,6 @@ export default function SettingsScreen() {
         title="Digital Sanctuary"
         onLeftPress={() => router.back()}
         leftIcon="chevron-left"
-        rightIcon="account"
-        onRightPress={() => (!user ? router.push("/auth") : null)}
       />
 
       <ScrollView
@@ -264,24 +259,35 @@ export default function SettingsScreen() {
         </View>
 
         {/* Notifications Section */}
-        <View className="mb-10">          <GlassCard className="rounded-[40px] p-8 border-none bg-white/60 dark:bg-white/5 shadow-sm">
-            <View className="flex-row items-center justify-between">
-              <View className="flex-row items-center flex-1">
-                <View className="w-10 h-10 rounded-full bg-sanctuary-accent/10 items-center justify-center">
-                  <MaterialCommunityIcons
-                    name="bell-outline"
-                    size={20}
-                    color="#b0926a"
-                  />
-                </View>
-                <View className="ml-4">
-                  <Text className="text-xl font-serif font-bold text-sanctuary-text dark:text-sanctuary-text-dark">
-                    Notifications
-                  </Text>
-                  <Text className="text-[10px] text-sanctuary-text-muted mt-1">
-                    Daily reminder for reflections
-                  </Text>
-                </View>
+        <View className="mb-10">
+          <GlassCard
+            className="rounded-[40px] p-8 border-none"
+            style={{ backgroundColor: theme.cardBackground }}
+          >
+            <View className="flex-row items-center mb-6">
+              <View
+                className="w-10 h-10 rounded-full items-center justify-center"
+                style={{ backgroundColor: theme.softAccent }}
+              >
+                <MaterialCommunityIcons
+                  name="bell-outline"
+                  size={20}
+                  color={theme.accent}
+                />
+              </View>
+              <View className="ml-4 flex-1">
+                <Text
+                  className="text-xl font-serif font-bold"
+                  style={{ color: theme.text }}
+                >
+                  Notifications
+                </Text>
+                <Text
+                  className="text-[10px] mt-1"
+                  style={{ color: theme.textSecondary }}
+                >
+                  Choose your daily reminder time
+                </Text>
               </View>
               <Switch
                 value={notificationsEnabled}
@@ -290,6 +296,42 @@ export default function SettingsScreen() {
                 thumbColor="white"
               />
             </View>
+
+            {notificationsEnabled &&
+              REMINDER_OPTIONS.map((opt) => {
+                const isActive = reminderSettings.window === opt.value;
+                return (
+                  <TouchableOpacity
+                    key={opt.value}
+                    onPress={() => handleReminderChange(opt.value)}
+                    className="flex-row items-center justify-between py-3 border-b"
+                    style={{ borderBottomColor: theme.border }}
+                  >
+                    <View className="flex-row items-center gap-3">
+                      <MaterialCommunityIcons
+                        name={opt.icon}
+                        size={18}
+                        color={isActive ? theme.accent : theme.textSecondary}
+                      />
+                      <Text
+                        className="text-sm font-bold"
+                        style={{
+                          color: isActive ? theme.accent : theme.text,
+                        }}
+                      >
+                        {opt.label}
+                      </Text>
+                    </View>
+                    {isActive && (
+                      <MaterialCommunityIcons
+                        name="check-circle"
+                        size={20}
+                        color={theme.accent}
+                      />
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
           </GlassCard>
         </View>
 
@@ -297,8 +339,11 @@ export default function SettingsScreen() {
         <View className="items-center mt-4">
           {user ? (
             <View className="items-center">
-              <Text className="text-xs text-sanctuary-text-muted dark:text-sanctuary-text-mutedDark mb-4">
-                Signed in as {user.email}
+              <Text className="text-base font-bold mb-1" style={{ color: theme.text }}>
+                {displayName}
+              </Text>
+              <Text className="text-xs mb-4" style={{ color: theme.textSecondary }}>
+                {user.email}
               </Text>
               <TouchableOpacity
                 className="flex-row items-center mb-8"
@@ -336,5 +381,6 @@ export default function SettingsScreen() {
         </View>
       </ScrollView>
     </SafeAreaView>
+    </SwipeBackContainer>
   );
 }

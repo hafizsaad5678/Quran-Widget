@@ -1,1 +1,1 @@
-export { default } from '../screens/AboutScreen.jsx';
+export { default } from '../screens/AboutScreen';

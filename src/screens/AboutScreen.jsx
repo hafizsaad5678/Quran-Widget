@@ -14,7 +14,7 @@ const features = [
     description: "A new ayah every day to ground your reflections.",
   },
   {
-    icon: "cellphone-widgets",
+    icon: "cellphone",
     title: "Widget Integration",
     description: "Keep Quranic reminders directly on your home screen.",
   },

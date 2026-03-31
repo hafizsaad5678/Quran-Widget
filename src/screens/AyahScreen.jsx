@@ -2,50 +2,205 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import {
-    Alert,
-    FlatList,
-    Modal,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  FlatList,
+  Modal,
+  Share,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { AyahDisplay } from "../components/AyahDisplay";
 import SwipeBackContainer from "../components/ui/SwipeBackContainer";
 import TopBar from "../components/ui/TopBar";
 import { useTheme } from "../context/ThemeContext";
+import { useToast } from "../context/ToastContext";
 import { useAyatLibrary } from "../hooks/useAyatLibrary";
 import {
-    getAyahNote,
-    markReadToday,
-    saveAyahNote,
-    saveAyahToHistory,
+  getAyahNote,
+  markReadToday,
+  saveAyahNote,
+  saveAyahToHistory,
 } from "../services/userService";
+import { useAppStore } from "../store/useAppStore";
 
+// ─── Selected Ayah Card ───────────────────────────────────────────────────────
+function AyahCard({ ayah, isFav, onFav, onNote, theme }) {
+  if (!ayah) return null;
+
+  const handleShare = () =>
+    Share.share({ message: `"${ayah.translation}"\n\n— ${ayah.surahName} ${ayah.surahNumber}:${ayah.ayahNumber}` });
+
+  return (
+    <View
+      className="mx-4 mt-3 mb-2 rounded-[32px] p-6 border"
+      style={{ backgroundColor: theme.cardBackground, borderColor: theme.border }}
+    >
+      {/* Meta row */}
+      <View className="flex-row items-center justify-between mb-4">
+        <View
+          className="rounded-full px-3 py-1"
+          style={{ backgroundColor: theme.softAccent }}
+        >
+          <Text style={{ fontSize: 11, fontWeight: "700", color: theme.accent }}>
+            {ayah.surahName}  {ayah.surahNumber}:{ayah.ayahNumber}
+          </Text>
+        </View>
+        <View className="flex-row gap-2">
+          <TouchableOpacity
+            onPress={onFav}
+            className="w-9 h-9 rounded-full items-center justify-center"
+            style={{ backgroundColor: isFav ? theme.softAccent : theme.cardBackground, borderWidth: 1, borderColor: theme.border }}
+          >
+            <MaterialCommunityIcons
+              name={isFav ? "heart" : "heart-outline"}
+              size={17}
+              color={isFav ? "#e05" : theme.textSecondary}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={onNote}
+            className="w-9 h-9 rounded-full items-center justify-center"
+            style={{ backgroundColor: theme.cardBackground, borderWidth: 1, borderColor: theme.border }}
+          >
+            <MaterialCommunityIcons name="pencil-outline" size={17} color={theme.textSecondary} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleShare}
+            className="w-9 h-9 rounded-full items-center justify-center"
+            style={{ backgroundColor: theme.cardBackground, borderWidth: 1, borderColor: theme.border }}
+          >
+            <MaterialCommunityIcons name="share-variant-outline" size={17} color={theme.textSecondary} />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Arabic */}
+      <Text
+        style={{
+          fontSize: 26,
+          lineHeight: 48,
+          textAlign: "right",
+          color: theme.text,
+          fontWeight: "600",
+          marginBottom: 16,
+        }}
+      >
+        {ayah.arabic}
+      </Text>
+
+      {/* Divider */}
+      <View style={{ height: 1, backgroundColor: theme.border, marginBottom: 14 }} />
+
+      {/* Translation */}
+      <Text
+        style={{
+          fontSize: 14,
+          lineHeight: 22,
+          color: theme.textSecondary,
+          fontStyle: "italic",
+        }}
+      >
+        "{ayah.translation}"
+      </Text>
+    </View>
+  );
+}
+
+// ─── Ayah List Row ────────────────────────────────────────────────────────────
+function AyahRow({ item, isSelected, isFav, onPress, theme }) {
+  return (
+    <TouchableOpacity
+      onPress={() => onPress(item)}
+      activeOpacity={0.7}
+      className="mx-4 mb-2 rounded-[20px] border overflow-hidden"
+      style={{
+        borderColor: isSelected ? theme.accent : theme.border,
+        backgroundColor: isSelected ? theme.softAccent : theme.cardBackground,
+      }}
+    >
+      <View className="flex-row items-stretch">
+        {/* Left accent bar when selected */}
+        <View style={{ width: 4, backgroundColor: isSelected ? theme.accent : "transparent", borderRadius: 4 }} />
+
+        <View className="flex-1 px-4 py-3">
+          {/* Top row: surah name + number badge */}
+          <View className="flex-row items-center justify-between mb-2">
+            <Text
+              className="text-sm font-bold"
+              style={{ color: isSelected ? theme.accent : theme.text }}
+            >
+              {item.surahName || item.surah}
+            </Text>
+            <View className="flex-row items-center gap-2">
+              {isFav && (
+                <MaterialCommunityIcons name="heart" size={12} color="#e05" />
+              )}
+              <View
+                className="rounded-full px-2 py-0.5"
+                style={{ backgroundColor: isSelected ? theme.accent : theme.softAccent }}
+              >
+                <Text style={{ fontSize: 9, fontWeight: "700", color: isSelected ? "#fff" : theme.accent }}>
+                  {item.surahNumber}:{item.ayahNumber}
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Arabic snippet */}
+          <Text
+            numberOfLines={1}
+            style={{
+              fontSize: 15,
+              textAlign: "right",
+              color: theme.text,
+              fontWeight: "500",
+              marginBottom: 4,
+              opacity: 0.85,
+            }}
+          >
+            {item.arabic}
+          </Text>
+
+          {/* Translation */}
+          <Text
+            numberOfLines={1}
+            className="text-xs italic"
+            style={{ color: theme.textSecondary }}
+          >
+            {item.translation}
+          </Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+}
+
+// ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function AyahScreen() {
   const router = useRouter();
   const { theme } = useTheme();
+  const { show } = useToast();
   const params = useLocalSearchParams();
   const selectedSurah = Number(params?.surah);
   const selectedAyah = Number(params?.ayah);
 
-  const { ayat, favorites } = useAyatLibrary();
+  const { ayat, favorites, toggleFavorite } = useAyatLibrary();
+  const collections = useAppStore((s) => s.collections);
+  const toggleAyahInCollection = useAppStore((s) => s.toggleAyahInCollection);
 
-  const [query, setQuery] = useState("");
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [current, setCurrent] = useState(null);
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [noteText, setNoteText] = useState("");
+  const listRef = React.useRef(null);
 
   useEffect(() => {
     if (!ayat.length) return;
     let initial = ayat[0];
     if (selectedSurah && selectedAyah) {
       const found = ayat.find(
-        (item) =>
-          Number(item.surahNumber) === selectedSurah &&
-          Number(item.ayahNumber) === selectedAyah,
+        (a) => Number(a.surahNumber) === selectedSurah && Number(a.ayahNumber) === selectedAyah,
       );
       if (found) initial = found;
     }
@@ -53,22 +208,15 @@ export default function AyahScreen() {
   }, [ayat, selectedSurah, selectedAyah]);
 
   const filteredAyat = useMemo(() => {
-    const text = query.trim().toLowerCase();
-    return ayat.filter((item) => {
-      const matchesQuery =
-        !text ||
-        item.surah.toLowerCase().includes(text) ||
-        item.translation.toLowerCase().includes(text);
-      const matchesFavorite = showFavoritesOnly
-        ? favorites.includes(item.id)
-        : true;
-      return matchesQuery && matchesFavorite;
-    });
-  }, [ayat, favorites, query, showFavoritesOnly]);
+    return ayat.filter((item) =>
+      showFavoritesOnly ? favorites.includes(item.id) : true
+    );
+  }, [ayat, favorites, showFavoritesOnly]);
 
   const chooseAyah = async (item) => {
     if (!item) return;
     setCurrent(item);
+    listRef.current?.scrollToOffset({ offset: 0, animated: true });
     await Promise.all([saveAyahToHistory(item), markReadToday()]);
     const note = await getAyahNote(item.id);
     setNoteText(note || "");
@@ -78,242 +226,136 @@ export default function AyahScreen() {
     if (!current) return;
     await saveAyahNote(current.id, noteText);
     setShowNoteModal(false);
-    Alert.alert("Saved", "Reflection updated successfully.");
+    show({ type: "success", message: "Reflection saved." });
   };
 
   return (
     <SwipeBackContainer>
-      <SafeAreaView
-        className="flex-1"
-        style={{ backgroundColor: theme.background }}
-      >
-        <TopBar
-          title="Ayah Library"
-          onLeftPress={() => router.back()}
-          leftIcon="chevron-left"
-        />
-
-        <View className="px-5 pb-3">
-          <View className="relative">
-            <MaterialCommunityIcons
-              name="magnify"
-              size={20}
-              color={theme.textSecondary}
-              style={{ position: "absolute", left: 16, top: 14, zIndex: 1 }}
-            />
-            <TextInput
-              value={query}
-              onChangeText={setQuery}
-              placeholder="Search surah or translation"
-              placeholderTextColor={theme.textSecondary}
-              className="rounded-2xl border pl-11 pr-4 py-3.5"
-              style={{
-                borderColor: theme.border,
-                backgroundColor: theme.cardBackground,
-                color: theme.text,
-              }}
-            />
-          </View>
-
-          <View className="mt-4 flex-row gap-2">
-            <TouchableOpacity
-              className="rounded-full px-6 py-2.5 shadow-sm"
-              style={{
-                backgroundColor: !showFavoritesOnly
-                  ? theme.accent
-                  : theme.cardBackground,
-                borderColor: theme.border,
-                borderWidth: !showFavoritesOnly ? 0 : 1,
-              }}
-              onPress={() => setShowFavoritesOnly(false)}
-            >
-              <Text
-                className="text-xs font-bold uppercase tracking-wider"
-                style={{
-                  color: !showFavoritesOnly ? "#fff" : theme.textSecondary,
-                }}
-              >
-                All
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              className="rounded-full px-6 py-2.5 shadow-sm"
-              style={{
-                backgroundColor: showFavoritesOnly
-                  ? theme.accent
-                  : theme.cardBackground,
-                borderColor: theme.border,
-                borderWidth: showFavoritesOnly ? 0 : 1,
-              }}
-              onPress={() => setShowFavoritesOnly(true)}
-            >
-              <Text
-                className="text-xs font-bold uppercase tracking-wider"
-                style={{
-                  color: showFavoritesOnly ? "#fff" : theme.textSecondary,
-                }}
-              >
-                Favorites
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+      <SafeAreaView className="flex-1" style={{ backgroundColor: theme.background }}>
+        <TopBar title="Ayah Library" leftIcon="chevron-left" onLeftPress={() => router.back()} />
 
         <FlatList
+          ref={listRef}
           data={filteredAyat}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{
-            paddingBottom: 120, // Enough space for tab bar
-            paddingHorizontal: 20,
-          }}
           showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 120 }}
           ListHeaderComponent={() => (
             <View>
-              <View className="items-center pt-2 pb-10">
-                <Text
-                  className="text-[10px] font-bold uppercase tracking-[4px]"
-                  style={{ color: theme.textSecondary }}
+              {/* Quick action cards */}
+              <View className="flex-row gap-3 px-4 mt-3 mb-3">
+                <TouchableOpacity
+                  onPress={() => router.push("/quran")}
+                  className="flex-1 rounded-[22px] p-4 border"
+                  style={{ backgroundColor: theme.cardBackground, borderColor: theme.border }}
                 >
-                  Restoring Stillness
-                </Text>
-                <View
-                  className="h-[1px] w-8 mt-2"
-                  style={{ backgroundColor: theme.border }}
-                />
-
-                <View className="w-full mt-10 mb-6">
-                  <AyahDisplay ayah={current} showShare />
-                </View>
-
-                <View className="flex-row items-center justify-center gap-2 mb-10">
-                  <View
-                    className="w-1.5 h-1.5 rounded-full"
-                    style={{
-                      backgroundColor: theme.textSecondary,
-                      opacity: 0.2,
-                    }}
-                  />
-                  <View
-                    className="w-1.5 h-1.5 rounded-full"
-                    style={{ backgroundColor: theme.accent }}
-                  />
-                  <View
-                    className="w-1.5 h-1.5 rounded-full"
-                    style={{
-                      backgroundColor: theme.textSecondary,
-                      opacity: 0.2,
-                    }}
-                  />
-                </View>
+                  <MaterialCommunityIcons name="book-open-page-variant-outline" size={22} color={theme.accent} />
+                  <Text className="mt-2 text-xs font-bold" style={{ color: theme.text }}>Full Quran</Text>
+                  <Text className="text-[10px] mt-0.5" style={{ color: theme.textSecondary }}>114 Surahs</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => router.push("/reading-session")}
+                  className="flex-1 rounded-[22px] p-4 border"
+                  style={{ backgroundColor: theme.softAccent, borderColor: theme.accent + "40" }}
+                >
+                  <MaterialCommunityIcons name="timer-outline" size={22} color={theme.accent} />
+                  <Text className="mt-2 text-xs font-bold" style={{ color: theme.text }}>Morning Calm</Text>
+                  <Text className="text-[10px] mt-0.5" style={{ color: theme.textSecondary }}>Timed session</Text>
+                </TouchableOpacity>
               </View>
 
-              <Text
-                className="mb-3 text-[10px] font-bold uppercase tracking-[2px] px-1"
-                style={{ color: theme.textSecondary }}
-              >
-                {showFavoritesOnly ? "Favorite Ayat" : "Curated Ayat"}
-              </Text>
+              {/* Selected ayah card */}
+              <AyahCard
+                ayah={current}
+                isFav={favorites.includes(current?.id)}
+                onFav={() => current && toggleFavorite(current.id)}
+                onNote={() => setShowNoteModal(true)}
+                theme={theme}
+              />
+
+              {/* Filter */}
+              <View className="px-4 mt-3 mb-2">
+                <View className="flex-row items-center gap-2">
+                  {[{ label: "All", value: false }, { label: "Favorites", value: true }].map((opt) => {
+                    const active = showFavoritesOnly === opt.value;
+                    return (
+                      <TouchableOpacity
+                        key={opt.label}
+                        onPress={() => setShowFavoritesOnly(opt.value)}
+                        className="rounded-full px-4 py-2 border"
+                        style={{
+                          backgroundColor: active ? theme.accent : theme.cardBackground,
+                          borderColor: active ? theme.accent : theme.border,
+                        }}
+                      >
+                        <Text className="text-xs font-bold" style={{ color: active ? "#fff" : theme.textSecondary }}>
+                          {opt.label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                  <Text className="ml-auto text-xs" style={{ color: theme.textSecondary }}>
+                    {filteredAyat.length} ayahs
+                  </Text>
+                </View>
+              </View>
             </View>
           )}
-          renderItem={({ item }) => {
-            const isSelected = current?.id === item.id;
-            return (
-              <TouchableOpacity
-                onPress={() => chooseAyah(item)}
-                activeOpacity={0.6}
-                className="mb-3 flex-row items-center rounded-2xl border px-4 py-4"
-                style={{
-                  borderColor: isSelected ? theme.accent : theme.border,
-                  backgroundColor: isSelected
-                    ? theme.softAccent + "40"
-                    : theme.cardBackground, // +40 for opacity if nativewind doesn't handle it
-                }}
-              >
-                <View
-                  className="w-12 items-center justify-center border-r pr-3 mr-4"
-                  style={{ borderRightColor: theme.border }}
-                >
-                  <Text
-                    className="text-[10px] font-bold"
-                    style={{ color: theme.accent }}
-                  >
-                    {item.surahNumber}:{item.ayahNumber}
-                  </Text>
-                </View>
-                <View className="flex-1">
-                  <Text
-                    numberOfLines={1}
-                    className="text-sm font-bold"
-                    style={{ color: theme.text }}
-                  >
-                    {item.surah}
-                  </Text>
-                  <Text
-                    numberOfLines={1}
-                    className="text-xs italic mt-0.5"
-                    style={{ color: theme.textSecondary }}
-                  >
-                    {item.translation}
-                  </Text>
-                </View>
-                {favorites.includes(item.id) ? (
-                  <MaterialCommunityIcons
-                    name="heart"
-                    size={16}
-                    color={theme.accent}
-                  />
-                ) : (
-                  <MaterialCommunityIcons
-                    name="chevron-right"
-                    size={16}
-                    color={theme.textSecondary}
-                  />
-                )}
-              </TouchableOpacity>
-            );
-          }}
+          renderItem={({ item }) => (
+            <AyahRow
+              item={item}
+              isSelected={current?.id === item.id}
+              isFav={favorites.includes(item.id)}
+              onPress={chooseAyah}
+              theme={theme}
+            />
+          )}
         />
 
+        {/* Reflection modal */}
         <Modal visible={showNoteModal} transparent animationType="slide">
-          <View className="flex-1 justify-end bg-black/40 px-4 pb-10">
-            <View className="rounded-[40px] border border-sanctuary-border/40 bg-sanctuary-background p-8 dark:border-sanctuary-border-dark/40 dark:bg-sanctuary-background-dark shadow-2xl">
-              <Text className="text-xl font-bold text-sanctuary-text dark:text-sanctuary-text-dark">
+          <View className="flex-1 justify-end bg-black/50 px-4 pb-8">
+            <View
+              className="rounded-[32px] p-6 border"
+              style={{ backgroundColor: theme.background, borderColor: theme.border }}
+            >
+              <Text className="text-lg font-bold mb-1" style={{ color: theme.text }}>
                 Personal Reflection
               </Text>
-              <Text className="text-sm italic text-sanctuary-text-muted leading-5">
-                &quot;{current?.translation}&quot;
+              <Text className="text-xs italic mb-4" numberOfLines={2} style={{ color: theme.textSecondary }}>
+                "{current?.translation}"
               </Text>
-              <Text className="text-xs italic text-sanctuary-text-muted dark:text-sanctuary-text-mutedDark mb-4">
-                Capture your thoughts on this verse
-              </Text>
-
               <TextInput
                 multiline
                 value={noteText}
                 onChangeText={setNoteText}
                 placeholder="Write your reflection here..."
-                placeholderTextColor="#7c7769"
-                className="h-40 rounded-3xl border border-sanctuary-border/30 bg-white/40 px-5 py-4 text-sanctuary-text dark:border-sanctuary-border-dark/30 dark:bg-white/5 dark:text-sanctuary-text-dark"
-                textAlignVertical="top"
+                placeholderTextColor={theme.textSecondary}
+                style={{
+                  height: 120,
+                  borderRadius: 16,
+                  borderWidth: 1,
+                  borderColor: theme.border,
+                  backgroundColor: theme.cardBackground,
+                  color: theme.text,
+                  padding: 14,
+                  textAlignVertical: "top",
+                }}
               />
-
-              <View className="mt-6 flex-row gap-3">
+              <View className="flex-row gap-3 mt-4">
                 <TouchableOpacity
                   onPress={() => setShowNoteModal(false)}
-                  className="flex-1 rounded-full border border-sanctuary-border/60 py-4"
+                  className="flex-1 rounded-2xl py-3 items-center border"
+                  style={{ borderColor: theme.border }}
                 >
-                  <Text className="text-center font-bold text-sanctuary-text/60">
-                    Cancel
-                  </Text>
+                  <Text className="font-bold" style={{ color: theme.textSecondary }}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={saveNote}
-                  className="flex-1 rounded-full bg-sanctuary-accent py-4 shadow-sm shadow-sanctuary-accent/30"
+                  className="flex-1 rounded-2xl py-3 items-center"
+                  style={{ backgroundColor: theme.accent }}
                 >
-                  <Text className="text-center font-bold text-white">
-                    Save Reflection
-                  </Text>
+                  <Text className="font-bold text-white">Save</Text>
                 </TouchableOpacity>
               </View>
             </View>

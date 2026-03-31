@@ -23,6 +23,7 @@ export const useAppStore = create(
         lastReadDate: null,
         readDays: {},
       },
+      lastSession: null, // { date, durationMinutes, surahName }
       settings: {
         translationKey: 'sahih',
         themeMode: 'auto', // 'light', 'dark', 'auto'
@@ -32,7 +33,7 @@ export const useAppStore = create(
         widgetFontSettings: { arabicSize: 20, translationSize: 14, lineSpacing: 1.25 },
         reminderSettings: { window: 'morning', customHour: 8, customMinute: 0 },
       },
-      
+
       // Actions
       toggleFavorite: (ayahId) => {
         const { favorites } = get();
@@ -41,12 +42,12 @@ export const useAppStore = create(
         set({ favorites: next });
         void syncNow();
       },
-      
+
       saveNote: (ayahId, noteText) => {
         set((state) => ({ notes: { ...state.notes, [ayahId]: noteText } }));
         void syncNow();
       },
-      
+
       addToHistory: (ayah) => {
         if (!ayah?.id) return;
         set((state) => {
@@ -55,7 +56,7 @@ export const useAppStore = create(
         });
         void syncNow();
       },
-      
+
       markReadToday: () => {
         const dateKey = todayKey();
         const { streak } = get();
@@ -66,7 +67,7 @@ export const useAppStore = create(
         const yesterdayKey = yesterday.toISOString().slice(0, 10);
 
         const current = streak.lastReadDate === yesterdayKey ? streak.current + 1 : 1;
-        
+
         const nextStreak = {
           ...streak,
           current,
@@ -74,36 +75,41 @@ export const useAppStore = create(
           lastReadDate: dateKey,
           readDays: { ...streak.readDays, [dateKey]: true },
         };
-        
+
         set({ streak: nextStreak });
         void syncNow();
       },
-      
+
+      recordSession: (durationMinutes, surahName) => {
+        set({ lastSession: { date: todayKey(), durationMinutes, surahName } });
+        void syncNow();
+      },
+
       updateSettings: (partial) => {
         set((state) => ({ settings: { ...state.settings, ...partial } }));
         void syncNow();
       },
-      
+
       addCollection: (collection) => {
         set((state) => ({ collections: [...state.collections, collection] }));
         void syncNow();
       },
-      
+
       toggleAyahInCollection: (collectionId, ayahId) => {
-         set((state) => {
-             const collections = state.collections.map(c => {
-                 if (c.id === collectionId) {
-                     const exists = c.ayahIds.includes(ayahId);
-                     const nextIds = exists ? c.ayahIds.filter(id => id !== ayahId) : [...c.ayahIds, ayahId];
-                     return { ...c, ayahIds: nextIds };
-                 }
-                 return c;
-             });
-             return { collections };
-         });
-         void syncNow();
+        set((state) => {
+          const collections = state.collections.map(c => {
+            if (c.id === collectionId) {
+              const exists = c.ayahIds.includes(ayahId);
+              const nextIds = exists ? c.ayahIds.filter(id => id !== ayahId) : [...c.ayahIds, ayahId];
+              return { ...c, ayahIds: nextIds };
+            }
+            return c;
+          });
+          return { collections };
+        });
+        void syncNow();
       },
-      
+
       // Selectors / Helpers
       getStreakStats: () => {
         const { streak } = get();
@@ -124,7 +130,7 @@ export const useAppStore = create(
           weekly,
         };
       },
-      
+
       resolveWidgetAyah: (allAyat) => {
         const { settings, favorites } = get();
         if (settings.widgetMode === "favorite" && favorites.length > 0) {

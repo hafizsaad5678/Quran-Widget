@@ -11,9 +11,12 @@ expo-env.d.ts
 android/build/
 android/app/build/
 app.apk
+*.apk
+*.aab
 
 # local IDE/editor files
 .idea/
+.vscode/
 
 # Native
 .kotlin/
@@ -36,14 +39,21 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
+# local env files — never commit secrets
 .env
+.env.local
 .env*.local
+
+# Supabase local config (contains project ref + tokens)
+supabase/.temp/
 
 # typescript
 *.tsbuildinfo
 
+# misc
 app-example
+coverage/
+.turbo/
 
 # generated native folders
 /ios

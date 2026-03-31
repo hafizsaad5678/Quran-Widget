@@ -118,17 +118,22 @@ export const getDailyAyah = () => {
 export const getSurah = (surahNumber) => {
     try {
         const surah = quranData[surahNumber - 1];
+        const surahEn = quranEn[surahNumber - 1];
         if (!surah) return [];
 
-        return surah.verses.map(verse => ({
-            id: `${surahNumber}:${verse.id}`,
-            surahNumber,
-            surahName: surah.transliteration,
-            surahNameArabic: surah.name,
-            ayahNumber: verse.id,
-            arabic: verse.text,
-            translation: verse.translation,
-        }));
+        return surah.verses.map(verse => {
+            const verseEn = surahEn?.verses?.find(v => v.id === verse.id);
+            return {
+                id: `${surahNumber}:${verse.id}`,
+                surahNumber,
+                surahName: surah.transliteration,
+                surahNameArabic: surah.name,
+                ayahNumber: verse.id,
+                arabic: verse.text,
+                translation: verseEn?.translation || verseEn?.text || "",
+                totalVerses: surah.total_verses,
+            };
+        });
     } catch (error) {
         console.error('Error getting surah:', error);
         return [];

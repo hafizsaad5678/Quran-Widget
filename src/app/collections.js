@@ -1,1 +1,2 @@
-export { default } from "../screens/concepts/CollectionsScreen.jsx";
+export { default } from '../screens/CollectionsScreen';
+

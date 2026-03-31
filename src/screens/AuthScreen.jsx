@@ -1,18 +1,16 @@
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    KeyboardAvoidingView,
+    Platform,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import SwipeBackContainer from "../components/ui/SwipeBackContainer";
 import TopBar from "../components/ui/TopBar";
 import { useTheme } from "../context/ThemeContext";
 import { signIn, signUp } from "../services/authService";
@@ -21,62 +19,82 @@ import { pullUserDataFromCloud } from "../services/cloudSyncService";
 export default function AuthScreen() {
   const { theme } = useTheme();
   const router = useRouter();
+  const { show } = useToast();
+  const params = useLocalSearchParams();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(params?.mode !== "signin");
 
   const handleAuth = async () => {
     if (!email || !password) {
-      Alert.alert("Required", "Please enter both email and password.");
+      show({ type: "warning", message: "Please enter email and password." });
+      return;
+    }
+    if (isSignUp && !displayName.trim()) {
+      show({ type: "warning", message: "Please enter your name." });
       return;
     }
     setLoading(true);
     try {
       if (isSignUp) {
-        const { error } = await signUp(email, password);
+        const { error } = await signUp(email, password, displayName.trim());
         if (error) throw error;
-        Alert.alert("Success", "Account created successfully.");
+        await pullUserDataFromCloud();
+        show({ type: "success", title: "Welcome!", message: "Account created. Your data is synced." });
       } else {
         const { error } = await signIn(email, password);
         if (error) throw error;
         await pullUserDataFromCloud();
-        Alert.alert("Welcome", "Logged in successfully.");
+        show({ type: "success", title: "Welcome back", message: "Logged in successfully." });
       }
       router.replace("/");
     } catch (err) {
-      Alert.alert("Authentication Failed", err.message || "An error occurred.");
+      show({ type: "error", title: "Authentication Failed", message: err.message || "An error occurred." });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <SwipeBackContainer>
-      <SafeAreaView
-        style={[styles.container, { backgroundColor: theme.background }]}
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.background }]}
+    >
+      <TopBar leftIcon="chevron-left" onLeftPress={() => router.back()} />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.keyboardView}
       >
-        <TopBar />
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.keyboardView}
+        <View
+          style={[
+            styles.card,
+            {
+              backgroundColor: theme.cardBackground,
+              borderColor: theme.border,
+            },
+          ]}
         >
-          <View
-            style={[
-              styles.card,
-              {
-                backgroundColor: theme.cardBackground,
-                borderColor: theme.border,
-              },
-            ]}
-          >
-            <Text style={[styles.title, { color: theme.text }]}>Sign in</Text>
+            <Text style={[styles.title, { color: theme.text }]}>
+              {isSignUp ? "Create Account" : "Sign In"}
+            </Text>
             <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
               {isSignUp
                 ? "Create an account to sync your journey."
                 : "Welcome back to your daily reflection."}
             </Text>
+
+            {isSignUp && (
+              <TextInput
+                style={[styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.secondary }]}
+                placeholder="Your name"
+                placeholderTextColor={theme.textDisabled}
+                autoCapitalize="words"
+                value={displayName}
+                onChangeText={setDisplayName}
+              />
+            )}
 
             <TextInput
               style={[
@@ -138,7 +156,6 @@ export default function AuthScreen() {
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
-    </SwipeBackContainer>
   );
 }
 

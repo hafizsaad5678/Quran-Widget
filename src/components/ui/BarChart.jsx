@@ -1,29 +1,41 @@
-import React from 'react';
-import { View, Text } from 'react-native';
+import React from "react";
+import { Text, View } from "react-native";
 
-const BarChart = ({ data, labels, title, target }) => {
+const BAR_MAX_HEIGHT = 100;
+
+const BarChart = ({ data = [], labels = [], target }) => {
   return (
-    <View className="mt-4">
-      <View className="mb-4">
-        <Text className="text-lg font-bold text-sanctuary-text dark:text-sanctuary-text-dark">
-          {title}
+    <View>
+      {target ? (
+        <Text className="text-[10px] font-bold text-sanctuary-text-muted dark:text-sanctuary-text-mutedDark mb-3">
+          {target}
         </Text>
-        <Text className="text-[10px] font-bold text-sanctuary-text-muted dark:text-sanctuary-text-mutedDark">
-          Target: {target}
-        </Text>
-      </View>
-      
-      <View className="flex-row items-end justify-between px-2 h-40">
+      ) : null}
+
+      <View className="flex-row items-end justify-between" style={{ height: BAR_MAX_HEIGHT + 24 }}>
         {data.map((value, idx) => {
-          const isToday = idx === 5; // SAT in the mockup
+          const barHeight = Math.max(4, (value / 100) * BAR_MAX_HEIGHT);
+          const isActive = value > 0;
           return (
-            <View key={idx} className="items-center flex-1">
-              <View 
-                className={`w-4 rounded-full ${isToday ? 'bg-sanctuary-accent' : 'bg-sanctuary-accent/20'}`} 
-                style={{ height: `${value}%`, minHeight: 4 }} 
+            <View key={idx} className="flex-1 items-center justify-end">
+              <View
+                style={{
+                  height: barHeight,
+                  width: 10,
+                  borderRadius: 6,
+                  backgroundColor: isActive ? "#b0926a" : "rgba(176,146,106,0.18)",
+                  marginBottom: 6,
+                }}
               />
-              <Text className={`mt-3 text-[8px] font-bold uppercase tracking-wider ${isToday ? 'text-sanctuary-text' : 'text-sanctuary-text-muted'} dark:${isToday ? 'text-sanctuary-text-dark' : 'text-sanctuary-text-mutedDark'}`}>
-                {labels[idx]}
+              <Text
+                style={{
+                  fontSize: 8,
+                  fontWeight: "700",
+                  color: isActive ? "#b0926a" : "#aaa",
+                  letterSpacing: 0.5,
+                }}
+              >
+                {labels[idx] ?? ""}
               </Text>
             </View>
           );

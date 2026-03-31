@@ -1,7 +1,6 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import React from "react";
-import { Text, TouchableOpacity, View } from "react-native";
-import { useShareAyah } from "../hooks/useShareAyah";
+import { Share, Text, TouchableOpacity, View } from "react-native";
 
 /**
  * AyahDisplay - Shows Arabic text, translation, and reference
@@ -11,7 +10,14 @@ import { useShareAyah } from "../hooks/useShareAyah";
  *   showShare  - show share button (default false)
  */
 export const AyahDisplay = ({ ayah, className, showShare = false }) => {
-  const { shareAyah } = useShareAyah();
+  const handleShare = async () => {
+    if (!ayah) return;
+    try {
+      await Share.share({
+        message: `"${ayah.translation}"\n\n— ${ayah.surahName || ayah.surah} ${ayah.surahNumber}:${ayah.ayahNumber}`,
+      });
+    } catch (_) {}
+  };
 
   if (!ayah) return null;
 
@@ -50,7 +56,7 @@ export const AyahDisplay = ({ ayah, className, showShare = false }) => {
 
         {showShare && (
           <TouchableOpacity
-            onPress={() => shareAyah(ayah)}
+            onPress={handleShare}
             className="w-8 h-8 rounded-full bg-sanctuary-accent/10 items-center justify-center"
             accessibilityLabel="Share this ayah"
           >
