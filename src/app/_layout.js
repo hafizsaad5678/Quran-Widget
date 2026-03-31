@@ -126,10 +126,6 @@ function AppTabs() {
       <Tabs.Screen name="about" options={{ href: null }} />
       <Tabs.Screen name="auth" options={{ href: null }} />
       <Tabs.Screen name="situation/[key]" options={{ href: null }} />
-      <Tabs.Screen name="pause" options={{ href: null }} />
-      <Tabs.Screen name="countdown" options={{ href: null }} />
-      <Tabs.Screen name="collections" options={{ href: null }} />
-      <Tabs.Screen name="widgets" options={{ href: null }} />
     </Tabs>
   );
 }

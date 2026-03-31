@@ -60,6 +60,9 @@ export default function SettingsScreen() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [user, setUser] = useState(null);
 
+  const translationKey = useAppStore((s) => s.settings.translationKey);
+  const updateSettings = useAppStore((s) => s.updateSettings);
+
   useEffect(() => {
     let mounted = true;
     getCurrentUser().then((u) => {
@@ -163,9 +166,105 @@ export default function SettingsScreen() {
           </GlassCard>
         </View>
 
+        {/* Translation Section */}
+        <View className="mb-6">
+          <GlassCard
+            className="rounded-[40px] p-8 border-none"
+            style={{ backgroundColor: theme.cardBackground }}
+          >
+            <View className="flex-row items-center mb-6">
+              <View
+                className="w-10 h-10 rounded-full items-center justify-center"
+                style={{ backgroundColor: theme.softAccent }}
+              >
+                <MaterialCommunityIcons
+                  name="translate"
+                  size={20}
+                  color={theme.accent}
+                />
+              </View>
+              <Text
+                className="ml-4 text-xl font-serif font-bold"
+                style={{ color: theme.text }}
+              >
+                Translation Style
+              </Text>
+            </View>
+
+            {TRANSLATION_OPTIONS.map((opt) => {
+              const isActive = translationKey === opt.key;
+              return (
+                <TouchableOpacity
+                  key={opt.key}
+                  onPress={() => updateSettings({ translationKey: opt.key })}
+                  className="flex-row items-center justify-between py-3 border-b"
+                  style={{ borderBottomColor: theme.border }}
+                >
+                  <Text
+                    className="text-sm font-bold"
+                    style={{ color: isActive ? theme.accent : theme.text }}
+                  >
+                    {opt.label}
+                  </Text>
+                  {isActive && (
+                    <MaterialCommunityIcons
+                      name="check-circle"
+                      size={20}
+                      color={theme.accent}
+                    />
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </GlassCard>
+        </View>
+
+        {/* Situations Section */}
+        <View className="mb-6">
+          <TouchableOpacity onPress={() => router.push("/situations")}>
+            <GlassCard
+              className="rounded-[40px] p-8 border-none"
+              style={{ backgroundColor: theme.cardBackground }}
+            >
+              <View className="flex-row items-center justify-between">
+                <View className="flex-row items-center flex-1">
+                  <View
+                    className="w-10 h-10 rounded-full items-center justify-center"
+                    style={{ backgroundColor: theme.softAccent }}
+                  >
+                    <MaterialCommunityIcons
+                      name="compass-outline"
+                      size={20}
+                      color={theme.accent}
+                    />
+                  </View>
+                  <View className="ml-4">
+                    <Text
+                      className="text-xl font-serif font-bold"
+                      style={{ color: theme.text }}
+                    >
+                      Situations
+                    </Text>
+                    <Text
+                      className="text-[10px] mt-1"
+                      style={{ color: theme.textSecondary }}
+                    >
+                      Find ayahs for your current moment
+                    </Text>
+                  </View>
+                </View>
+                <MaterialCommunityIcons
+                  name="chevron-right"
+                  size={22}
+                  color={theme.textSecondary}
+                />
+              </View>
+            </GlassCard>
+          </TouchableOpacity>
+        </View>
+
         {/* Notifications Section */}
-        <View className="mb-10">
-          <GlassCard className="rounded-[40px] p-8 border-none bg-white/60 dark:bg-white/5 shadow-sm">
+        <View className="mb-10">          <GlassCard className="rounded-[40px] p-8 border-none bg-white/60 dark:bg-white/5 shadow-sm">
             <View className="flex-row items-center justify-between">
               <View className="flex-row items-center flex-1">
                 <View className="w-10 h-10 rounded-full bg-sanctuary-accent/10 items-center justify-center">

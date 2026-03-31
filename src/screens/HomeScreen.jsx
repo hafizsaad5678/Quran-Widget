@@ -2,14 +2,14 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  Alert,
-  Animated,
-  Modal,
-  PanResponder,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
+    Alert,
+    Animated,
+    Modal,
+    PanResponder,
+    ScrollView,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AyahDisplay } from "../components/AyahDisplay";
@@ -20,14 +20,14 @@ import { WidgetSettingsSheet } from "../components/ui/WidgetPreview";
 import { useAyatLibrary } from "../hooks/useAyatLibrary";
 import { useDailyAyah } from "../hooks/useDailyAyah";
 import {
-  getHistory,
-  getStreakStats,
-  getWidgetFontSettings,
-  getWidgetLayoutSettings,
-  getWidgetStyleName,
-  saveWidgetFontSettings,
-  saveWidgetLayoutSettings,
-  saveWidgetStyleName,
+    getHistory,
+    getStreakStats,
+    getWidgetFontSettings,
+    getWidgetLayoutSettings,
+    getWidgetStyleName,
+    saveWidgetFontSettings,
+    saveWidgetLayoutSettings,
+    saveWidgetStyleName,
 } from "../services/userService";
 import { setWidgetStyle, WIDGET_STYLES } from "../services/widgetProvider";
 
@@ -227,7 +227,7 @@ export default function HomeScreen() {
             </Text>
           </View>
 
-          <AyahDisplay ayah={ayah} className="mb-6" />
+          <AyahDisplay ayah={ayah} className="mb-6" showShare />
 
           <View className="mt-8 border-t border-sanctuary-border/20 pt-6 items-center">
             <Text className="text-sm italic text-sanctuary-text/70 dark:text-sanctuary-text-dark/70 text-center mb-1">

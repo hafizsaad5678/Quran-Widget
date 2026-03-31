@@ -1,1 +1,1 @@
-export { default } from "../screens/concepts/StatsScreen.jsx";
+export { default } from '../screens/StatsScreen.jsx';

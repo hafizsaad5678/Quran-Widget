@@ -2,13 +2,13 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  Alert,
-  FlatList,
-  Modal,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Alert,
+    FlatList,
+    Modal,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AyahDisplay } from "../components/AyahDisplay";
@@ -17,10 +17,10 @@ import TopBar from "../components/ui/TopBar";
 import { useTheme } from "../context/ThemeContext";
 import { useAyatLibrary } from "../hooks/useAyatLibrary";
 import {
-  getAyahNote,
-  markReadToday,
-  saveAyahNote,
-  saveAyahToHistory,
+    getAyahNote,
+    markReadToday,
+    saveAyahNote,
+    saveAyahToHistory,
 } from "../services/userService";
 
 export default function AyahScreen() {
@@ -183,7 +183,7 @@ export default function AyahScreen() {
                 />
 
                 <View className="w-full mt-10 mb-6">
-                  <AyahDisplay ayah={current} />
+                  <AyahDisplay ayah={current} showShare />
                 </View>
 
                 <View className="flex-row items-center justify-center gap-2 mb-10">
