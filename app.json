@@ -1,29 +1,37 @@
 {
   "expo": {
-    "name": "quran-daily-ayah",
+    "name": "Ayah Connect",
     "slug": "quran-daily-ayah",
     "version": "1.0.0",
     "orientation": "portrait",
     "scheme": "qurandailyayah",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "ios": {
-      "supportsTablet": true
+    "icon": "./assets/images.png",
+    "splash": {
+      "image": "./assets/images.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#D4AF37"
     },
     "android": {
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.hmzahmza.qurandailyayah"
+      "package": "com.qurandaily.ayah"
     },
     "web": {
       "output": "static"
     },
     "plugins": [
-      "expo-router"
+      [
+        "expo-router",
+        {
+          "origin": "https://qurandailyayah.com",
+          "root": "./src/app"
+        }
+      ]
     ],
     "experiments": {
-      "typedRoutes": true,
-      "reactCompiler": true
+      "typedRoutes": true
     },
     "extra": {
       "router": {},

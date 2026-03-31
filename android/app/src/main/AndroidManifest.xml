@@ -1,11 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
   <uses-permission android:name="android.permission.INTERNET"/>
-  <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
   <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
   <uses-permission android:name="android.permission.VIBRATE"/>
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-  <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT"/>
   <queries>
     <intent>
       <action android:name="android.intent.action.VIEW"/>
@@ -27,13 +25,14 @@
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="qurandailyayah"/>
+        <data android:scheme="exp+quran-daily-ayah"/>
       </intent-filter>
     </activity>
-    <receiver android:name="com.hmzahmza.qurandailyayah.MyAyahWidget" android:exported="true">
+    <receiver android:name=".AyahWidgetProvider" android:exported="true">
       <intent-filter>
         <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
       </intent-filter>
-      <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info"/>
+      <meta-data android:name="android.appwidget.provider" android:resource="@xml/ayah_widget_info"/>
     </receiver>
   </application>
 </manifest>

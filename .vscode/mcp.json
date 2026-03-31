@@ -1,0 +1,8 @@
+{
+  "servers": {
+    "supabase": {
+      "command": "node",
+      "args": ["scripts/start-supabase-mcp.cjs"]
+    }
+  }
+}

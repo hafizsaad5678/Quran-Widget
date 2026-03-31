@@ -1,111 +1,133 @@
 # Quran Daily Ayah
 
-A minimal Expo app that displays one Quran ayah per day with 12 daily push notifications (every 2 hours).
+Quran Daily Ayah is an Expo Router React Native app with NativeWind styling, offline-first persistence, and optional Supabase cloud sync.
 
-## Features
+## Tech Stack
 
-- **Offline-first**: All data stored locally in JSON
-- **Date-based Selection**: Same ayah shown throughout the day (deterministic, no randomness)
-- **Push Notifications**: 12 notifications per day at 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22 hours
-- **Same Ayah Everywhere**: Same ayah appears on home screen and in all notifications
-- **Minimal UI**: Clean, centered design with Arabic text and translation
-- **Single Screen**: No navigation, just the daily ayah
-- **No Backend**: Completely offline, no API calls
+- Expo SDK 54
+- React Native 0.81
+- Expo Router (routes under src/app)
+- NativeWind + Tailwind config
+- AsyncStorage for offline-first local data
+- Supabase JS client for MCQ + cloud user data sync
+- Existing native integrations (widget + notifications) via JS services only
 
-## Project Structure
+## Architecture
 
-```
-quran-daily-ayah/
-├── app/
-│   └── index.js              # Entry point (expo-router)
-├── src/
-│   ├── screens/
-│   │   └── HomeScreen.js     # Main screen component
-│   └── utils/
-│       ├── getDailyAyah.js   # Logic to select ayah by day
-│       └── notifications.js  # Notification setup and scheduling
-├── assets/
-│   └── ayat/
-│       └── daily_50_ayat.json # 50 Quran ayat data
-└── App.js                     # Root layout
-```
+### Frontend
 
-## How It Works
+- Routing: src/app
+- Screens: src/screens
+- Reusable UI primitives: src/components/ui
+- Feature components: src/components/feature
+- Legacy reusable components retained and gradually refactored in src/components
 
-### Daily Ayah Selection
-- Uses day of year (1-365) modulo 50 to select an ayah
-- Same ayah shown for entire day
-- No randomness, deterministic selection
+### Data Layer
 
-### Notifications
-- Requests permission on first launch
-- Schedules 12 notifications per day (every 2 hours)
-- Each notification shows today's ayah translation
-- Uses Expo Notifications (no backend required)
-- Notifications repeat daily at the same times
+- Local persistence wrappers: src/services/storageService.js
+- User data logic: src/services/userService.js
+- Daily ayah and curated dataset: src/constants/quranCurated.js
+- Situation definitions: src/constants/situations.js
+- Translation profiles: src/constants/translations.js
 
-## Setup
+### Cloud Layer (Supabase)
 
-1. Install dependencies:
+- Client: src/services/supabaseClient.js
+- MCQ service: src/services/mcqService.js
+- Cloud sync service: src/services/cloudSyncService.js
+- SQL migration: supabase/migrations/20260327_user_data_and_mcq.sql
+
+## Current Feature Set
+
+### Core Screens
+
+- Home
+- Ayah Library
+- Quotes
+- Settings
+- About
+- Situation Selector (new)
+- Situation Detail with MCQ interaction (new)
+
+### App.md Concept Screens (first pass)
+
+- Pause Mode
+- Countdown
+- Collections
+- Stats
+- Widget Gallery
+
+These are implemented as route screens and linked from Home quick actions.
+
+### Local + Cloud Behavior
+
+- Offline-first by default: all user actions persist locally first.
+- Background cloud sync is triggered from user mutations (favorites, notes, history, streak, settings).
+- If Supabase runtime env vars are missing, app continues in local-only mode.
+
+### Reminder UX
+
+- Settings now supports custom hour/minute controls for reminder window `custom`.
+- Selected values are passed only through existing service interface:
+  - updateReminderWindow(window, customHour, customMinute)
+- No native module code changes required.
+
+## Native Module Boundary
+
+Widget and notification native implementations are treated as black boxes.
+
+App integration is done only through existing service interfaces:
+
+- src/services/widgetProvider.js
+- src/services/notificationService.js
+
+## Supabase Tables
+
+Migration file creates/ensures:
+
+- app_devices
+- user_favorites
+- user_notes
+- user_streaks
+- user_history
+- user_settings
+- mcq_questions
+- mcq_options
+- mcq_attempts
+
+Also includes indexes and permissive per-device RLS policies for anonymous mode.
+
+## Environment Variables
+
+In addition to MCP variables, app runtime needs:
+
+- EXPO_PUBLIC_SUPABASE_URL
+- EXPO_PUBLIC_SUPABASE_ANON_KEY
+
+See .env.example.
+
+## Run
+
 ```bash
-cd quran-daily-ayah
 npm install
-```
-
-2. Start the app:
-```bash
 npm start
 ```
 
-3. On first launch, grant notification permissions when prompted
-
-## Run Commands
+Android development build:
 
 ```bash
-# Start the app (choose platform when prompted)
-npm start
-
-# Start for Android
-npm run android
-
-# Start for iOS
-npm run ios
-
-# Start for Web
-npm run web
+npx expo run:android
 ```
 
-## Data Format
+## Quality Checks
 
-Each ayah in `daily_50_ayat.json` contains:
-- `id`: Unique identifier
-- `surah`: Chapter name
-- `ayah`: Verse number
-- `arabic`: Arabic text
-- `translation`: English translation
+Lint:
 
-## Technologies
+```bash
+npx eslint src/**/*.js src/**/*.jsx app/**/*.js
+```
 
-- React Native
-- Expo
-- expo-router (navigation)
-- expo-notifications (push notifications)
-- AsyncStorage (permission tracking)
+## Notes
 
-## Notification Schedule
-
-Notifications are sent at:
-- 00:00 (midnight)
-- 02:00
-- 04:00
-- 06:00
-- 08:00
-- 10:00
-- 12:00 (noon)
-- 14:00
-- 16:00
-- 18:00
-- 20:00
-- 22:00
-
-Each notification contains the same daily ayah translation.
+- This codebase currently contains both older styled components and newer NativeWind components.
+- Refactoring is incremental: after each screen batch, old or duplicated code is removed as flows are stabilized.
