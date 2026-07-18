@@ -1,1 +1,1 @@
-export { default } from '../../screens/SituationSelectorScreen';
+export { SituationSelectorScreen as default } from "../../screens";

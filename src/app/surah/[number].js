@@ -1,1 +1,1 @@
-export { default } from '../../screens/SurahReaderScreen';
+export { SurahReaderScreen as default } from "../../screens";

@@ -2,12 +2,12 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-    Alert,
-    FlatList,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  FlatList,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import SwipeBackContainer from "../components/ui/SwipeBackContainer";
@@ -34,11 +34,12 @@ export default function ReadingSessionScreen() {
   const [custom, setCustom] = useState("");
   const [useCustom, setUseCustom] = useState(false);
   const [surahQuery, setSurahQuery] = useState("");
-  const [chosenSurah, setChosenSurah] = useState({ number: 1, name: "Al-Fatihah" });
 
   const filteredSurahs = surahs.filter((s) => {
     const q = surahQuery.toLowerCase();
-    return !q || s.name.toLowerCase().includes(q) || String(s.number).includes(q);
+    return (
+      !q || s.name.toLowerCase().includes(q) || String(s.number).includes(q)
+    );
   });
 
   const handleNext = () => {
@@ -54,26 +55,39 @@ export default function ReadingSessionScreen() {
 
   const handleStart = (surah) => {
     const duration = useCustom ? parseInt(custom, 10) * 60 : selected;
-    startSession(duration, surah.name);
-    router.replace({
-      pathname: "/surah/[number]",
-      params: { number: surah.number },
-    });
+    startSession(duration, surah.name, surah.number);
+    router.replace(`/surah/${surah.number}`);
   };
 
   if (step === "surah") {
     return (
       <SwipeBackContainer>
-        <SafeAreaView className="flex-1" style={{ backgroundColor: theme.background }}>
-          <View className="flex-row items-center px-4 py-3 border-b" style={{ borderBottomColor: theme.border }}>
+        <SafeAreaView
+          className="flex-1"
+          style={{ backgroundColor: theme.background }}
+        >
+          <View
+            className="flex-row items-center px-4 py-3 border-b"
+            style={{ borderBottomColor: theme.border }}
+          >
             <TouchableOpacity
               onPress={() => setStep("timer")}
               className="w-10 h-10 rounded-full items-center justify-center border mr-3"
-              style={{ borderColor: theme.border, backgroundColor: theme.cardBackground }}
+              style={{
+                borderColor: theme.border,
+                backgroundColor: theme.cardBackground,
+              }}
             >
-              <MaterialCommunityIcons name="chevron-left" size={22} color={theme.accent} />
+              <MaterialCommunityIcons
+                name="chevron-left"
+                size={22}
+                color={theme.accent}
+              />
             </TouchableOpacity>
-            <Text className="text-lg font-bold flex-1" style={{ color: theme.text }}>
+            <Text
+              className="text-lg font-bold flex-1"
+              style={{ color: theme.text }}
+            >
               Choose Starting Surah
             </Text>
           </View>
@@ -81,9 +95,16 @@ export default function ReadingSessionScreen() {
           <View className="px-4 py-3">
             <View
               className="flex-row items-center rounded-2xl border px-4 py-3"
-              style={{ backgroundColor: theme.cardBackground, borderColor: theme.border }}
+              style={{
+                backgroundColor: theme.cardBackground,
+                borderColor: theme.border,
+              }}
             >
-              <MaterialCommunityIcons name="magnify" size={18} color={theme.textSecondary} />
+              <MaterialCommunityIcons
+                name="magnify"
+                size={18}
+                color={theme.textSecondary}
+              />
               <TextInput
                 value={surahQuery}
                 onChangeText={setSurahQuery}
@@ -110,15 +131,33 @@ export default function ReadingSessionScreen() {
                   className="w-9 h-9 rounded-full items-center justify-center mr-4"
                   style={{ backgroundColor: theme.softAccent }}
                 >
-                  <Text style={{ fontSize: 10, fontWeight: "700", color: theme.accent }}>
+                  <Text
+                    style={{
+                      fontSize: 10,
+                      fontWeight: "700",
+                      color: theme.accent,
+                    }}
+                  >
                     {item.number}
                   </Text>
                 </View>
                 <View className="flex-1">
-                  <Text style={{ fontSize: 14, fontWeight: "700", color: theme.text }}>{item.name}</Text>
-                  <Text style={{ fontSize: 11, color: theme.textSecondary }}>{item.totalVerses} ayahs</Text>
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: "700",
+                      color: theme.text,
+                    }}
+                  >
+                    {item.name}
+                  </Text>
+                  <Text style={{ fontSize: 11, color: theme.textSecondary }}>
+                    {item.totalVerses} ayahs
+                  </Text>
                 </View>
-                <Text style={{ fontSize: 18, color: theme.accent }}>{item.nameArabic}</Text>
+                <Text style={{ fontSize: 18, color: theme.accent }}>
+                  {item.nameArabic}
+                </Text>
               </TouchableOpacity>
             )}
           />
@@ -129,16 +168,28 @@ export default function ReadingSessionScreen() {
 
   return (
     <SwipeBackContainer>
-      <SafeAreaView className="flex-1" style={{ backgroundColor: theme.background }}>
+      <SafeAreaView
+        className="flex-1"
+        style={{ backgroundColor: theme.background }}
+      >
         <View className="flex-row items-center px-4 py-3">
           <TouchableOpacity
             onPress={() => router.back()}
             className="w-10 h-10 rounded-full items-center justify-center border mr-3"
-            style={{ borderColor: theme.border, backgroundColor: theme.cardBackground }}
+            style={{
+              borderColor: theme.border,
+              backgroundColor: theme.cardBackground,
+            }}
           >
-            <MaterialCommunityIcons name="chevron-left" size={22} color={theme.accent} />
+            <MaterialCommunityIcons
+              name="chevron-left"
+              size={22}
+              color={theme.accent}
+            />
           </TouchableOpacity>
-          <Text className="text-xl font-bold" style={{ color: theme.text }}>Morning Calm</Text>
+          <Text className="text-xl font-bold" style={{ color: theme.text }}>
+            Morning Calm
+          </Text>
         </View>
 
         <View className="flex-1 px-6 justify-center">
@@ -147,12 +198,22 @@ export default function ReadingSessionScreen() {
               className="w-24 h-24 rounded-full items-center justify-center mb-4"
               style={{ backgroundColor: theme.softAccent }}
             >
-              <MaterialCommunityIcons name="timer-outline" size={48} color={theme.accent} />
+              <MaterialCommunityIcons
+                name="timer-outline"
+                size={48}
+                color={theme.accent}
+              />
             </View>
-            <Text className="text-2xl font-serif font-bold text-center" style={{ color: theme.text }}>
+            <Text
+              className="text-2xl font-serif font-bold text-center"
+              style={{ color: theme.text }}
+            >
               Set Your Reading Time
             </Text>
-            <Text className="text-sm text-center mt-2 leading-6" style={{ color: theme.textSecondary }}>
+            <Text
+              className="text-sm text-center mt-2 leading-6"
+              style={{ color: theme.textSecondary }}
+            >
               Your streak will be marked when the session completes.
             </Text>
           </View>
@@ -164,14 +225,22 @@ export default function ReadingSessionScreen() {
               return (
                 <TouchableOpacity
                   key={p.seconds}
-                  onPress={() => { setSelected(p.seconds); setUseCustom(false); }}
+                  onPress={() => {
+                    setSelected(p.seconds);
+                    setUseCustom(false);
+                  }}
                   className="rounded-2xl px-5 py-3 border"
                   style={{
-                    backgroundColor: active ? theme.accent : theme.cardBackground,
+                    backgroundColor: active
+                      ? theme.accent
+                      : theme.cardBackground,
                     borderColor: active ? theme.accent : theme.border,
                   }}
                 >
-                  <Text className="font-bold text-sm" style={{ color: active ? "#fff" : theme.text }}>
+                  <Text
+                    className="font-bold text-sm"
+                    style={{ color: active ? "#fff" : theme.text }}
+                  >
                     {p.label}
                   </Text>
                 </TouchableOpacity>
@@ -180,20 +249,33 @@ export default function ReadingSessionScreen() {
           </View>
 
           {/* Custom input */}
-          <TouchableOpacity onPress={() => setUseCustom((v) => !v)} className="flex-row items-center mb-3">
+          <TouchableOpacity
+            onPress={() => setUseCustom((v) => !v)}
+            className="flex-row items-center mb-3"
+          >
             <View
               className="w-5 h-5 rounded border mr-2 items-center justify-center"
-              style={{ borderColor: theme.accent, backgroundColor: useCustom ? theme.accent : "transparent" }}
+              style={{
+                borderColor: theme.accent,
+                backgroundColor: useCustom ? theme.accent : "transparent",
+              }}
             >
-              {useCustom && <MaterialCommunityIcons name="check" size={12} color="#fff" />}
+              {useCustom && (
+                <MaterialCommunityIcons name="check" size={12} color="#fff" />
+              )}
             </View>
-            <Text className="text-sm" style={{ color: theme.textSecondary }}>Custom duration</Text>
+            <Text className="text-sm" style={{ color: theme.textSecondary }}>
+              Custom duration
+            </Text>
           </TouchableOpacity>
 
           {useCustom && (
             <View
               className="flex-row items-center rounded-2xl border px-4 mb-6"
-              style={{ backgroundColor: theme.cardBackground, borderColor: theme.border }}
+              style={{
+                backgroundColor: theme.cardBackground,
+                borderColor: theme.border,
+              }}
             >
               <TextInput
                 value={custom}
@@ -213,7 +295,9 @@ export default function ReadingSessionScreen() {
             className="rounded-2xl py-4 items-center mt-2"
             style={{ backgroundColor: theme.accent }}
           >
-            <Text className="text-base font-bold text-white">Next — Choose Surah</Text>
+            <Text className="text-base font-bold text-white">
+              Next — Choose Surah
+            </Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>

@@ -1,1 +1,1 @@
-export { default } from '../../screens/StatsScreen';
+export { StatsScreen as default } from "../../screens";

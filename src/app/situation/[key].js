@@ -1,2 +1,1 @@
-export { default } from '../../screens/SituationDetailScreen';
-
+export { SituationDetailScreen as default } from "../../screens";

@@ -1,1 +1,1 @@
-export { default } from '../screens/SurahListScreen';
+export { Quran16LineSurahSelectorScreen as default } from "../screens";

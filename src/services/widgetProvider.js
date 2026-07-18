@@ -235,3 +235,70 @@ export const setWidgetTapAction = async (tapAction) => {
     return false;
   }
 };
+
+export const setWidgetLayout = async (layout = {}) => {
+  if (Platform.OS !== "android") return false;
+
+  if (!AyahWidgetModule) {
+    return false;
+  }
+
+  const width = Number(layout.width || 340);
+  const height = Number(layout.height || 170);
+  const arabicLines = Number(layout.arabicLines || 3);
+  const translationLines = Number(layout.translationLines || 3);
+
+  try {
+    if (typeof AyahWidgetModule.setWidgetLayout === "function") {
+      await AyahWidgetModule.setWidgetLayout(
+        width,
+        height,
+        arabicLines,
+        translationLines,
+      );
+      return true;
+    }
+
+    if (typeof AyahWidgetModule.updateWidgetLayout === "function") {
+      await AyahWidgetModule.updateWidgetLayout(
+        width,
+        height,
+        arabicLines,
+        translationLines,
+      );
+      return true;
+    }
+
+    return false;
+  } catch (error) {
+    console.warn("⚠️ Widget layout update failed:", error?.message || error);
+    return false;
+  }
+};
+
+export const setWidgetUpdateInterval = async (intervalHours) => {
+  if (Platform.OS !== "android") return false;
+
+  if (!AyahWidgetModule) {
+    return false;
+  }
+
+  const safeHours = Math.max(1, Number(intervalHours || 6));
+
+  try {
+    if (typeof AyahWidgetModule.setWidgetUpdateInterval === "function") {
+      await AyahWidgetModule.setWidgetUpdateInterval(safeHours);
+      return true;
+    }
+
+    if (typeof AyahWidgetModule.setUpdateInterval === "function") {
+      await AyahWidgetModule.setUpdateInterval(safeHours);
+      return true;
+    }
+
+    return false;
+  } catch (error) {
+    console.warn("⚠️ Widget interval update failed:", error?.message || error);
+    return false;
+  }
+};

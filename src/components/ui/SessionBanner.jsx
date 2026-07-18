@@ -1,5 +1,4 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import React, { useEffect } from "react";
 import { Animated, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -8,11 +7,17 @@ import { useTheme } from "../../context/ThemeContext";
 import { useToast } from "../../context/ToastContext";
 
 export default function SessionBanner() {
-  const { session, formatted, pauseSession, resumeSession, abandonSession, clearSession } = useSession();
+  const {
+    session,
+    formatted,
+    pauseSession,
+    resumeSession,
+    abandonSession,
+    clearSession,
+  } = useSession();
   const { show } = useToast();
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
-  const router = useRouter();
   const slideY = React.useRef(new Animated.Value(-80)).current;
 
   const visible = Boolean(session && !session.abandoned);
@@ -24,7 +29,7 @@ export default function SessionBanner() {
       speed: 18,
       bounciness: 4,
     }).start();
-  }, [visible]);
+  }, [slideY, visible]);
 
   // Show toast on natural completion
   useEffect(() => {
@@ -36,7 +41,7 @@ export default function SessionBanner() {
       duration: 5000,
     });
     clearSession();
-  }, [session?.completed]);
+  }, [clearSession, session?.completed, session?.durationSeconds, show]);
 
   if (!session) return null;
 
@@ -44,15 +49,11 @@ export default function SessionBanner() {
     show({
       type: "warning",
       title: "Session Ended Early",
-      message: "Streak not counted — complete the full session to earn your streak.",
+      message:
+        "Streak not counted — complete the full session to earn your streak.",
       duration: 4000,
     });
     abandonSession();
-  };
-
-  const handleTap = () => {
-    // Navigate back to the surah reader if not already there
-    router.push({ pathname: "/surah/[number]", params: { number: 1 } });
   };
 
   return (
@@ -87,18 +88,33 @@ export default function SessionBanner() {
         {/* Timer icon + time */}
         <TouchableOpacity
           onPress={session.running ? pauseSession : resumeSession}
-          style={{ flexDirection: "row", alignItems: "center", gap: 6, flex: 1 }}
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 6,
+            flex: 1,
+          }}
         >
           <MaterialCommunityIcons
             name={session.running ? "pause-circle" : "play-circle"}
             size={22}
             color={theme.accent}
           />
-          <Text style={{ fontSize: 16, fontWeight: "700", color: theme.accent, letterSpacing: 1 }}>
+          <Text
+            style={{
+              fontSize: 16,
+              fontWeight: "700",
+              color: theme.accent,
+              letterSpacing: 1,
+            }}
+          >
             {formatted}
           </Text>
           {session.surahName ? (
-            <Text style={{ fontSize: 11, color: theme.textSecondary }} numberOfLines={1}>
+            <Text
+              style={{ fontSize: 11, color: theme.textSecondary }}
+              numberOfLines={1}
+            >
               · {session.surahName}
             </Text>
           ) : null}
@@ -117,8 +133,14 @@ export default function SessionBanner() {
             paddingVertical: 5,
           }}
         >
-          <MaterialCommunityIcons name="stop-circle-outline" size={16} color="#f44336" />
-          <Text style={{ fontSize: 11, fontWeight: "700", color: "#f44336" }}>End</Text>
+          <MaterialCommunityIcons
+            name="stop-circle-outline"
+            size={16}
+            color="#f44336"
+          />
+          <Text style={{ fontSize: 11, fontWeight: "700", color: "#f44336" }}>
+            End
+          </Text>
         </TouchableOpacity>
       </View>
     </Animated.View>

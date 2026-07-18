@@ -6,7 +6,7 @@ import { useTheme } from "../../context/ThemeContext";
  * SurahHeader — displays surah name (Arabic + English) and ayah count.
  * Reusable across SurahReaderScreen, SurahListScreen, etc.
  */
-export default function SurahHeader({ meta, ayahCount }) {
+export default function SurahHeader({ meta, ayahCount, fontLoaded = false }) {
   const { theme } = useTheme();
   if (!meta) return null;
 
@@ -17,14 +17,24 @@ export default function SurahHeader({ meta, ayahCount }) {
     >
       {/* Arabic name */}
       <Text
-        style={{ fontSize: 28, color: theme.accent, fontWeight: "700", marginBottom: 4 }}
+        style={{
+          fontSize: 28,
+          color: theme.accent,
+          marginBottom: 4,
+          fontFamily: fontLoaded ? "ScheherazadeNew_400Regular" : undefined,
+        }}
       >
         {meta.nameArabic}
       </Text>
 
       {/* English transliteration */}
       <Text
-        style={{ fontSize: 18, fontWeight: "600", color: theme.text, marginBottom: 6 }}
+        style={{
+          fontSize: 18,
+          fontWeight: "600",
+          color: theme.text,
+          marginBottom: 6,
+        }}
       >
         {meta.name}
       </Text>
@@ -35,7 +45,9 @@ export default function SurahHeader({ meta, ayahCount }) {
           className="rounded-full px-3 py-1"
           style={{ backgroundColor: theme.softAccent }}
         >
-          <Text style={{ fontSize: 11, fontWeight: "700", color: theme.accent }}>
+          <Text
+            style={{ fontSize: 11, fontWeight: "700", color: theme.accent }}
+          >
             {ayahCount ?? meta.totalVerses} Ayahs
           </Text>
         </View>
@@ -43,7 +55,9 @@ export default function SurahHeader({ meta, ayahCount }) {
           className="rounded-full px-3 py-1"
           style={{ backgroundColor: theme.softAccent }}
         >
-          <Text style={{ fontSize: 11, fontWeight: "700", color: theme.accent }}>
+          <Text
+            style={{ fontSize: 11, fontWeight: "700", color: theme.accent }}
+          >
             {meta.revelationType === "Meccan" ? "Makkiyah" : "Madaniyah"}
           </Text>
         </View>
@@ -51,7 +65,9 @@ export default function SurahHeader({ meta, ayahCount }) {
           className="rounded-full px-3 py-1"
           style={{ backgroundColor: theme.softAccent }}
         >
-          <Text style={{ fontSize: 11, fontWeight: "700", color: theme.accent }}>
+          <Text
+            style={{ fontSize: 11, fontWeight: "700", color: theme.accent }}
+          >
             Surah {meta.number}
           </Text>
         </View>
@@ -65,6 +81,7 @@ export default function SurahHeader({ meta, ayahCount }) {
             color: theme.textSecondary,
             marginTop: 16,
             letterSpacing: 1,
+            fontFamily: fontLoaded ? "ScheherazadeNew_400Regular" : undefined,
           }}
         >
           بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ

@@ -1,1 +1,1 @@
-export { default } from '../screens/AboutScreen';
+export { AboutScreen as default } from "../screens";

@@ -8,8 +8,16 @@ import { Share, Text, TouchableOpacity, View } from "react-native";
  *   ayah       - ayah object
  *   className  - extra class names
  *   showShare  - show share button (default false)
+ *   showTranslation - show translation block (default true)
+ *   fontLoaded - Arabic font availability flag
  */
-export const AyahDisplay = ({ ayah, className, showShare = false }) => {
+export const AyahDisplay = ({
+  ayah,
+  className,
+  showShare = false,
+  showTranslation = true,
+  fontLoaded = false,
+}) => {
   const handleShare = async () => {
     if (!ayah) return;
     try {
@@ -25,7 +33,13 @@ export const AyahDisplay = ({ ayah, className, showShare = false }) => {
     <View className={`items-center px-4 ${className}`}>
       {/* Arabic Text */}
       <Text
-        className="text-center text-4xl leading-[60px] text-sanctuary-text dark:text-sanctuary-text-dark font-bold mb-10"
+        className="text-center mb-10"
+        style={{
+          fontSize: 38,
+          lineHeight: 64,
+          color: "#f5f6f7",
+          fontFamily: fontLoaded ? "ScheherazadeNew_400Regular" : undefined,
+        }}
         dir="rtl"
       >
         {ayah.arabic || ayah.text}
@@ -42,9 +56,18 @@ export const AyahDisplay = ({ ayah, className, showShare = false }) => {
       </View>
 
       {/* Translation */}
-      <Text className="text-center text-xl font-serif italic text-sanctuary-text/80 dark:text-sanctuary-text-dark/80 leading-8 mb-4">
-        &quot;{ayah.translation || "Translation loading..."}&quot;
-      </Text>
+      {showTranslation && (
+        <Text
+          className="mt-6 text-center text-xl font-serif italic text-sanctuary-text/80 dark:text-sanctuary-text-dark/80 mb-4"
+          style={{
+            lineHeight: 36,
+            paddingTop: 6,
+            includeFontPadding: true,
+          }}
+        >
+          &quot;{ayah.translation || "Translation loading..."}&quot;
+        </Text>
+      )}
 
       {/* Reference + optional Share button */}
       <View className="flex-row items-center gap-3 mt-1">

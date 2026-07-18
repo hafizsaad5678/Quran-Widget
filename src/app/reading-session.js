@@ -1,1 +1,1 @@
-export { default } from '../screens/ReadingSessionScreen';
+export { ReadingSessionScreen as default } from "../screens";

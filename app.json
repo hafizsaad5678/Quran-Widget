@@ -7,16 +7,19 @@
     "scheme": "qurandailyayah",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "icon": "./assets/images.png",
+    "icon": "./assets/Quran Widget Logo.png",
     "splash": {
-      "image": "./assets/images.png",
+      "image": "./assets/Quran Widget Logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#D4AF37"
     },
     "android": {
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.qurandaily.ayah"
+      "package": "com.qurandaily.ayah",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/Quran Widget Logo.png"
+      }
     },
     "web": {
       "output": "static"
@@ -28,7 +31,8 @@
           "origin": "https://qurandailyayah.com",
           "root": "./src/app"
         }
-      ]
+      ],
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true

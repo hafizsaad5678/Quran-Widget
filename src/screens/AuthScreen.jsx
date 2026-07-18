@@ -1,34 +1,52 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    KeyboardAvoidingView,
-    Platform,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import TopBar from "../components/ui/TopBar";
 import { useTheme } from "../context/ThemeContext";
+import { useToast } from "../context/ToastContext";
 import { signIn, signUp } from "../services/authService";
 import { pullUserDataFromCloud } from "../services/cloudSyncService";
+import { isSupabaseConfigured } from "../services/supabaseClient";
 
 export default function AuthScreen() {
   const { theme } = useTheme();
   const router = useRouter();
-  const { show } = useToast();
+  const { show, showAlert } = useToast();
   const params = useLocalSearchParams();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(params?.mode !== "signin");
+  const [isSignUp, setIsSignUp] = useState(params?.mode === "signup");
+  const authEnabled = isSupabaseConfigured;
+
+  useEffect(() => {
+    setIsSignUp(params?.mode === "signup");
+  }, [params?.mode]);
 
   const handleAuth = async () => {
+    if (!authEnabled) {
+      (showAlert ?? show)({
+        title: "Offline Mode",
+        message:
+          "Cloud auth is not configured. Continuing without account sync.",
+        type: "info",
+      });
+      router.replace("/(tabs)/");
+      return;
+    }
+
     if (!email || !password) {
       show({ type: "warning", message: "Please enter email and password." });
       return;
@@ -40,19 +58,51 @@ export default function AuthScreen() {
     setLoading(true);
     try {
       if (isSignUp) {
-        const { error } = await signUp(email, password, displayName.trim());
+        const { data, error } = await signUp(
+          email,
+          password,
+          displayName.trim(),
+        );
         if (error) throw error;
-        await pullUserDataFromCloud();
-        show({ type: "success", title: "Welcome!", message: "Account created. Your data is synced." });
+
+        // Supabase can create a user without an active session when email confirmation is required.
+        if (data?.session) {
+          await pullUserDataFromCloud();
+          show({
+            type: "success",
+            title: "Welcome!",
+            message: "Account created. Your data is synced.",
+          });
+          router.replace("/(tabs)/");
+        } else {
+          setIsSignUp(false);
+          (showAlert ?? show)({
+            type: "info",
+            title: "Account Created",
+            message: "Please verify your email, then sign in.",
+          });
+        }
       } else {
-        const { error } = await signIn(email, password);
+        const { data, error } = await signIn(email, password);
         if (error) throw error;
+
+        if (!data?.session) {
+          throw new Error("Sign in did not create a valid session.");
+        }
+
         await pullUserDataFromCloud();
-        show({ type: "success", title: "Welcome back", message: "Logged in successfully." });
+        (showAlert ?? show)({
+          title: "Welcome back",
+          message: "Logged in successfully.",
+        });
+        router.replace("/(tabs)/");
       }
-      router.replace("/");
     } catch (err) {
-      show({ type: "error", title: "Authentication Failed", message: err.message || "An error occurred." });
+      show({
+        type: "error",
+        title: "Authentication Failed",
+        message: err.message || "An error occurred.",
+      });
     } finally {
       setLoading(false);
     }
@@ -62,7 +112,11 @@ export default function AuthScreen() {
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.background }]}
     >
-      <TopBar leftIcon="chevron-left" onLeftPress={() => router.back()} />
+      <TopBar
+        title={isSignUp ? "Create Account" : "Sign In"}
+        leftIcon="chevron-left"
+        onLeftPress={() => router.replace("/onboarding")}
+      />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
@@ -76,73 +130,90 @@ export default function AuthScreen() {
             },
           ]}
         >
-            <Text style={[styles.title, { color: theme.text }]}>
-              {isSignUp ? "Create Account" : "Sign In"}
-            </Text>
-            <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-              {isSignUp
+          <Text style={[styles.title, { color: theme.text }]}>
+            {isSignUp ? "Create Account" : "Sign In"}
+          </Text>
+          <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
+            {!authEnabled
+              ? "Cloud auth is unavailable in this build. Continue in offline mode."
+              : isSignUp
                 ? "Create an account to sync your journey."
                 : "Welcome back to your daily reflection."}
-            </Text>
+          </Text>
 
-            {isSignUp && (
-              <TextInput
-                style={[styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.secondary }]}
-                placeholder="Your name"
-                placeholderTextColor={theme.textDisabled}
-                autoCapitalize="words"
-                value={displayName}
-                onChangeText={setDisplayName}
-              />
+          {isSignUp && (
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  color: theme.text,
+                  borderColor: theme.border,
+                  backgroundColor: theme.secondary,
+                },
+              ]}
+              placeholder="Your name"
+              placeholderTextColor={theme.textDisabled}
+              autoCapitalize="words"
+              value={displayName}
+              onChangeText={setDisplayName}
+              editable={authEnabled}
+            />
+          )}
+
+          <TextInput
+            style={[
+              styles.input,
+              {
+                color: theme.text,
+                borderColor: theme.border,
+                backgroundColor: theme.secondary,
+              },
+            ]}
+            placeholder="Email address"
+            placeholderTextColor={theme.textDisabled}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            value={email}
+            onChangeText={setEmail}
+            editable={authEnabled}
+          />
+
+          <TextInput
+            style={[
+              styles.input,
+              {
+                color: theme.text,
+                borderColor: theme.border,
+                backgroundColor: theme.secondary,
+              },
+            ]}
+            placeholder="Password"
+            placeholderTextColor={theme.textDisabled}
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+            editable={authEnabled}
+          />
+
+          <TouchableOpacity
+            style={[styles.authButton, { backgroundColor: theme.accent }]}
+            onPress={handleAuth}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#000" />
+            ) : (
+              <Text style={styles.authButtonText}>
+                {authEnabled
+                  ? isSignUp
+                    ? "Sign Up"
+                    : "Sign In"
+                  : "Continue Offline"}
+              </Text>
             )}
+          </TouchableOpacity>
 
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  color: theme.text,
-                  borderColor: theme.border,
-                  backgroundColor: theme.secondary,
-                },
-              ]}
-              placeholder="Email address"
-              placeholderTextColor={theme.textDisabled}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              value={email}
-              onChangeText={setEmail}
-            />
-
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  color: theme.text,
-                  borderColor: theme.border,
-                  backgroundColor: theme.secondary,
-                },
-              ]}
-              placeholder="Password"
-              placeholderTextColor={theme.textDisabled}
-              secureTextEntry
-              value={password}
-              onChangeText={setPassword}
-            />
-
-            <TouchableOpacity
-              style={[styles.authButton, { backgroundColor: theme.accent }]}
-              onPress={handleAuth}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#000" />
-              ) : (
-                <Text style={styles.authButtonText}>
-                  {isSignUp ? "Sign Up" : "Sign In"}
-                </Text>
-              )}
-            </TouchableOpacity>
-
+          {authEnabled ? (
             <TouchableOpacity
               style={styles.toggleButton}
               onPress={() => setIsSignUp(!isSignUp)}
@@ -153,21 +224,22 @@ export default function AuthScreen() {
                   : "Don't have an account? Sign Up"}
               </Text>
             </TouchableOpacity>
-          </View>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
+          ) : null}
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    padding: 20,
   },
   keyboardView: {
     flex: 1,
     justifyContent: "center",
+    paddingHorizontal: 20,
+    paddingBottom: 20,
   },
   card: {
     padding: 30,

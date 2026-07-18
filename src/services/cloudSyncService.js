@@ -11,8 +11,14 @@ const getStore = () => require("../store/useAppStore").useAppStore;
 
 // Returns the authenticated user's UUID, or null if not logged in
 const getAuthUserId = async () => {
-  const { data: { session } } = (await supabase?.auth.getSession()) ?? { data: {} };
-  return session?.user?.id ?? null;
+  try {
+    const {
+      data: { session },
+    } = (await supabase?.auth.getSession()) ?? { data: {} };
+    return session?.user?.id ?? null;
+  } catch (_error) {
+    return null;
+  }
 };
 
 // Generic upsert helper
@@ -45,28 +51,28 @@ export const pushUserDataToCloud = async () => {
     // Favorites
     store.favorites.length > 0
       ? upsertTable(
-        "user_favorites",
-        store.favorites.map((ayahId) => ({
-          user_id: uid,
-          ayah_id: ayahId,
-          updated_at: now,
-        })),
-        "user_id,ayah_id",
-      )
+          "user_favorites",
+          store.favorites.map((ayahId) => ({
+            user_id: uid,
+            ayah_id: ayahId,
+            updated_at: now,
+          })),
+          "user_id,ayah_id",
+        )
       : { synced: true },
 
     // Notes
     Object.keys(store.notes).length > 0
       ? upsertTable(
-        "user_notes",
-        Object.entries(store.notes).map(([ayahId, note]) => ({
-          user_id: uid,
-          ayah_id: ayahId,
-          note_text: note,
-          updated_at: now,
-        })),
-        "user_id,ayah_id",
-      )
+          "user_notes",
+          Object.entries(store.notes).map(([ayahId, note]) => ({
+            user_id: uid,
+            ayah_id: ayahId,
+            note_text: note,
+            updated_at: now,
+          })),
+          "user_id,ayah_id",
+        )
       : { synced: true },
 
     // Streak
@@ -100,32 +106,32 @@ export const pushUserDataToCloud = async () => {
     // History
     store.history.length > 0
       ? upsertTable(
-        "user_history",
-        store.history.map((item) => ({
-          user_id: uid,
-          ayah_id: item.id,
-          ayah_data: item,
-          viewed_at: item.timestamp || now,
-        })),
-        "user_id,ayah_id",
-      )
+          "user_history",
+          store.history.map((item) => ({
+            user_id: uid,
+            ayah_id: item.id,
+            ayah_data: item,
+            viewed_at: item.timestamp || now,
+          })),
+          "user_id,ayah_id",
+        )
       : { synced: true },
 
     // Collections
     store.collections.length > 0
       ? upsertTable(
-        "user_collections",
-        store.collections.map((c) => ({
-          user_id: uid,
-          collection_id: c.id,
-          name: c.name,
-          ayah_ids: c.ayahIds,
-          color: c.color,
-          icon: c.icon,
-          updated_at: now,
-        })),
-        "user_id,collection_id",
-      )
+          "user_collections",
+          store.collections.map((c) => ({
+            user_id: uid,
+            collection_id: c.id,
+            name: c.name,
+            ayah_ids: c.ayahIds,
+            color: c.color,
+            icon: c.icon,
+            updated_at: now,
+          })),
+          "user_id,collection_id",
+        )
       : { synced: true },
   ]);
 
@@ -141,13 +147,17 @@ export const pullUserDataFromCloud = async () => {
   if (!uid) return false;
 
   try {
-    const [favsRes, notesRes, streakRes, settingsRes, collectionsRes] = await Promise.all([
-      supabase.from("user_favorites").select("ayah_id").eq("user_id", uid),
-      supabase.from("user_notes").select("ayah_id, note_text").eq("user_id", uid),
-      supabase.from("user_streaks").select("*").eq("user_id", uid).single(),
-      supabase.from("user_settings").select("*").eq("user_id", uid).single(),
-      supabase.from("user_collections").select("*").eq("user_id", uid),
-    ]);
+    const [favsRes, notesRes, streakRes, settingsRes, collectionsRes] =
+      await Promise.all([
+        supabase.from("user_favorites").select("ayah_id").eq("user_id", uid),
+        supabase
+          .from("user_notes")
+          .select("ayah_id, note_text")
+          .eq("user_id", uid),
+        supabase.from("user_streaks").select("*").eq("user_id", uid).single(),
+        supabase.from("user_settings").select("*").eq("user_id", uid).single(),
+        supabase.from("user_collections").select("*").eq("user_id", uid),
+      ]);
 
     const store = getStore().getState();
 
@@ -160,11 +170,16 @@ export const pullUserDataFromCloud = async () => {
 
     if (notesRes.data?.length) {
       const serverNotes = {};
-      notesRes.data.forEach((n) => { serverNotes[n.ayah_id] = n.note_text; });
+      notesRes.data.forEach((n) => {
+        serverNotes[n.ayah_id] = n.note_text;
+      });
       getStore().setState({ notes: { ...store.notes, ...serverNotes } });
     }
 
-    if (streakRes.data && streakRes.data.best_streak >= (store.streak.best || 0)) {
+    if (
+      streakRes.data &&
+      streakRes.data.best_streak >= (store.streak.best || 0)
+    ) {
       getStore().setState({
         streak: {
           current: streakRes.data.current_streak,
@@ -198,10 +213,13 @@ export const pullUserDataFromCloud = async () => {
         icon: c.icon,
       }));
       // Merge: keep local collections not on server, update ones that are
-      const localIds = store.collections.map((c) => c.id);
       const serverIds = serverCollections.map((c) => c.id);
-      const localOnly = store.collections.filter((c) => !serverIds.includes(c.id));
-      getStore().setState({ collections: [...serverCollections, ...localOnly] });
+      const localOnly = store.collections.filter(
+        (c) => !serverIds.includes(c.id),
+      );
+      getStore().setState({
+        collections: [...serverCollections, ...localOnly],
+      });
     }
 
     return true;
@@ -225,10 +243,15 @@ let _networkListenerStarted = false;
 export const startNetworkSyncListener = () => {
   if (_networkListenerStarted) return;
   _networkListenerStarted = true;
-  // Poll every 30s using fetch-based check — no native module needed
+  // Poll every 2 minutes using fetch-based check — no native module needed
   setInterval(() => {
-    fetch("https://www.google.com/generate_204", { method: "HEAD", cache: "no-cache" })
-      .then((res) => { if (res.status === 204 || res.ok) void pushUserDataToCloud(); })
-      .catch(() => { });
-  }, 30000);
+    fetch("https://www.google.com/generate_204", {
+      method: "HEAD",
+      cache: "no-cache",
+    })
+      .then((res) => {
+        if (res.status === 204 || res.ok) void pushUserDataToCloud();
+      })
+      .catch(() => {});
+  }, 120000);
 };

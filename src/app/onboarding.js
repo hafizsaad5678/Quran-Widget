@@ -1,1 +1,1 @@
-export { default } from '../screens/OnboardingScreen';
+export { OnboardingScreen as default } from "../screens";

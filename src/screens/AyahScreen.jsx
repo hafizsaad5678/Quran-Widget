@@ -1,3 +1,7 @@
+import {
+  ScheherazadeNew_400Regular,
+  useFonts,
+} from "@expo-google-fonts/scheherazade-new";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
@@ -22,19 +26,23 @@ import {
   saveAyahNote,
   saveAyahToHistory,
 } from "../services/userService";
-import { useAppStore } from "../store/useAppStore";
 
 // ─── Selected Ayah Card ───────────────────────────────────────────────────────
-function AyahCard({ ayah, isFav, onFav, onNote, theme }) {
+function AyahCard({ ayah, isFav, onFav, onNote, theme, fontLoaded }) {
   if (!ayah) return null;
 
   const handleShare = () =>
-    Share.share({ message: `"${ayah.translation}"\n\n— ${ayah.surahName} ${ayah.surahNumber}:${ayah.ayahNumber}` });
+    Share.share({
+      message: `"${ayah.translation}"\n\n— ${ayah.surahName} ${ayah.surahNumber}:${ayah.ayahNumber}`,
+    });
 
   return (
     <View
       className="mx-4 mt-3 mb-2 rounded-[32px] p-6 border"
-      style={{ backgroundColor: theme.cardBackground, borderColor: theme.border }}
+      style={{
+        backgroundColor: theme.cardBackground,
+        borderColor: theme.border,
+      }}
     >
       {/* Meta row */}
       <View className="flex-row items-center justify-between mb-4">
@@ -42,15 +50,21 @@ function AyahCard({ ayah, isFav, onFav, onNote, theme }) {
           className="rounded-full px-3 py-1"
           style={{ backgroundColor: theme.softAccent }}
         >
-          <Text style={{ fontSize: 11, fontWeight: "700", color: theme.accent }}>
-            {ayah.surahName}  {ayah.surahNumber}:{ayah.ayahNumber}
+          <Text
+            style={{ fontSize: 11, fontWeight: "700", color: theme.accent }}
+          >
+            {ayah.surahName} {ayah.surahNumber}:{ayah.ayahNumber}
           </Text>
         </View>
         <View className="flex-row gap-2">
           <TouchableOpacity
             onPress={onFav}
             className="w-9 h-9 rounded-full items-center justify-center"
-            style={{ backgroundColor: isFav ? theme.softAccent : theme.cardBackground, borderWidth: 1, borderColor: theme.border }}
+            style={{
+              backgroundColor: isFav ? theme.softAccent : theme.cardBackground,
+              borderWidth: 1,
+              borderColor: theme.border,
+            }}
           >
             <MaterialCommunityIcons
               name={isFav ? "heart" : "heart-outline"}
@@ -61,16 +75,32 @@ function AyahCard({ ayah, isFav, onFav, onNote, theme }) {
           <TouchableOpacity
             onPress={onNote}
             className="w-9 h-9 rounded-full items-center justify-center"
-            style={{ backgroundColor: theme.cardBackground, borderWidth: 1, borderColor: theme.border }}
+            style={{
+              backgroundColor: theme.cardBackground,
+              borderWidth: 1,
+              borderColor: theme.border,
+            }}
           >
-            <MaterialCommunityIcons name="pencil-outline" size={17} color={theme.textSecondary} />
+            <MaterialCommunityIcons
+              name="pencil-outline"
+              size={17}
+              color={theme.textSecondary}
+            />
           </TouchableOpacity>
           <TouchableOpacity
             onPress={handleShare}
             className="w-9 h-9 rounded-full items-center justify-center"
-            style={{ backgroundColor: theme.cardBackground, borderWidth: 1, borderColor: theme.border }}
+            style={{
+              backgroundColor: theme.cardBackground,
+              borderWidth: 1,
+              borderColor: theme.border,
+            }}
           >
-            <MaterialCommunityIcons name="share-variant-outline" size={17} color={theme.textSecondary} />
+            <MaterialCommunityIcons
+              name="share-variant-outline"
+              size={17}
+              color={theme.textSecondary}
+            />
           </TouchableOpacity>
         </View>
       </View>
@@ -82,7 +112,7 @@ function AyahCard({ ayah, isFav, onFav, onNote, theme }) {
           lineHeight: 48,
           textAlign: "right",
           color: theme.text,
-          fontWeight: "600",
+          fontFamily: fontLoaded ? "ScheherazadeNew_400Regular" : undefined,
           marginBottom: 16,
         }}
       >
@@ -90,7 +120,9 @@ function AyahCard({ ayah, isFav, onFav, onNote, theme }) {
       </Text>
 
       {/* Divider */}
-      <View style={{ height: 1, backgroundColor: theme.border, marginBottom: 14 }} />
+      <View
+        style={{ height: 1, backgroundColor: theme.border, marginBottom: 14 }}
+      />
 
       {/* Translation */}
       <Text
@@ -101,14 +133,14 @@ function AyahCard({ ayah, isFav, onFav, onNote, theme }) {
           fontStyle: "italic",
         }}
       >
-        "{ayah.translation}"
+        &quot;{ayah.translation || "Translation unavailable offline."}&quot;
       </Text>
     </View>
   );
 }
 
 // ─── Ayah List Row ────────────────────────────────────────────────────────────
-function AyahRow({ item, isSelected, isFav, onPress, theme }) {
+function AyahRow({ item, isSelected, isFav, onPress, theme, fontLoaded }) {
   return (
     <TouchableOpacity
       onPress={() => onPress(item)}
@@ -121,7 +153,13 @@ function AyahRow({ item, isSelected, isFav, onPress, theme }) {
     >
       <View className="flex-row items-stretch">
         {/* Left accent bar when selected */}
-        <View style={{ width: 4, backgroundColor: isSelected ? theme.accent : "transparent", borderRadius: 4 }} />
+        <View
+          style={{
+            width: 4,
+            backgroundColor: isSelected ? theme.accent : "transparent",
+            borderRadius: 4,
+          }}
+        />
 
         <View className="flex-1 px-4 py-3">
           {/* Top row: surah name + number badge */}
@@ -138,9 +176,17 @@ function AyahRow({ item, isSelected, isFav, onPress, theme }) {
               )}
               <View
                 className="rounded-full px-2 py-0.5"
-                style={{ backgroundColor: isSelected ? theme.accent : theme.softAccent }}
+                style={{
+                  backgroundColor: isSelected ? theme.accent : theme.softAccent,
+                }}
               >
-                <Text style={{ fontSize: 9, fontWeight: "700", color: isSelected ? "#fff" : theme.accent }}>
+                <Text
+                  style={{
+                    fontSize: 9,
+                    fontWeight: "700",
+                    color: isSelected ? "#fff" : theme.accent,
+                  }}
+                >
                   {item.surahNumber}:{item.ayahNumber}
                 </Text>
               </View>
@@ -154,7 +200,7 @@ function AyahRow({ item, isSelected, isFav, onPress, theme }) {
               fontSize: 15,
               textAlign: "right",
               color: theme.text,
-              fontWeight: "500",
+              fontFamily: fontLoaded ? "ScheherazadeNew_400Regular" : undefined,
               marginBottom: 4,
               opacity: 0.85,
             }}
@@ -180,14 +226,13 @@ function AyahRow({ item, isSelected, isFav, onPress, theme }) {
 export default function AyahScreen() {
   const router = useRouter();
   const { theme } = useTheme();
+  const [fontLoaded] = useFonts({ ScheherazadeNew_400Regular });
   const { show } = useToast();
   const params = useLocalSearchParams();
   const selectedSurah = Number(params?.surah);
   const selectedAyah = Number(params?.ayah);
 
   const { ayat, favorites, toggleFavorite } = useAyatLibrary();
-  const collections = useAppStore((s) => s.collections);
-  const toggleAyahInCollection = useAppStore((s) => s.toggleAyahInCollection);
 
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [current, setCurrent] = useState(null);
@@ -200,7 +245,9 @@ export default function AyahScreen() {
     let initial = ayat[0];
     if (selectedSurah && selectedAyah) {
       const found = ayat.find(
-        (a) => Number(a.surahNumber) === selectedSurah && Number(a.ayahNumber) === selectedAyah,
+        (a) =>
+          Number(a.surahNumber) === selectedSurah &&
+          Number(a.ayahNumber) === selectedAyah,
       );
       if (found) initial = found;
     }
@@ -209,7 +256,7 @@ export default function AyahScreen() {
 
   const filteredAyat = useMemo(() => {
     return ayat.filter((item) =>
-      showFavoritesOnly ? favorites.includes(item.id) : true
+      showFavoritesOnly ? favorites.includes(item.id) : true,
     );
   }, [ayat, favorites, showFavoritesOnly]);
 
@@ -231,8 +278,15 @@ export default function AyahScreen() {
 
   return (
     <SwipeBackContainer>
-      <SafeAreaView className="flex-1" style={{ backgroundColor: theme.background }}>
-        <TopBar title="Ayah Library" leftIcon="chevron-left" onLeftPress={() => router.back()} />
+      <SafeAreaView
+        className="flex-1"
+        style={{ backgroundColor: theme.background }}
+      >
+        <TopBar
+          title="Ayah Library"
+          leftIcon="chevron-left"
+          onLeftPress={() => router.back()}
+        />
 
         <FlatList
           ref={listRef}
@@ -245,22 +299,98 @@ export default function AyahScreen() {
               {/* Quick action cards */}
               <View className="flex-row gap-3 px-4 mt-3 mb-3">
                 <TouchableOpacity
-                  onPress={() => router.push("/quran")}
+                  onPress={() => router.push("/quran-offline")}
                   className="flex-1 rounded-[22px] p-4 border"
-                  style={{ backgroundColor: theme.cardBackground, borderColor: theme.border }}
+                  style={{
+                    backgroundColor: theme.cardBackground,
+                    borderColor: theme.border,
+                  }}
                 >
-                  <MaterialCommunityIcons name="book-open-page-variant-outline" size={22} color={theme.accent} />
-                  <Text className="mt-2 text-xs font-bold" style={{ color: theme.text }}>Full Quran</Text>
-                  <Text className="text-[10px] mt-0.5" style={{ color: theme.textSecondary }}>114 Surahs</Text>
+                  <MaterialCommunityIcons
+                    name="book-open-page-variant-outline"
+                    size={22}
+                    color={theme.accent}
+                  />
+                  <Text
+                    className="mt-2 text-xs font-bold"
+                    style={{ color: theme.text }}
+                  >
+                    Full Quran
+                  </Text>
+                  <Text
+                    className="text-[10px] mt-0.5"
+                    style={{ color: theme.textSecondary }}
+                  >
+                    114 Surahs
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => router.push("/reading-session")}
                   className="flex-1 rounded-[22px] p-4 border"
-                  style={{ backgroundColor: theme.softAccent, borderColor: theme.accent + "40" }}
+                  style={{
+                    backgroundColor: theme.softAccent,
+                    borderColor: theme.accent + "40",
+                  }}
                 >
-                  <MaterialCommunityIcons name="timer-outline" size={22} color={theme.accent} />
-                  <Text className="mt-2 text-xs font-bold" style={{ color: theme.text }}>Morning Calm</Text>
-                  <Text className="text-[10px] mt-0.5" style={{ color: theme.textSecondary }}>Timed session</Text>
+                  <MaterialCommunityIcons
+                    name="timer-outline"
+                    size={22}
+                    color={theme.accent}
+                  />
+                  <Text
+                    className="mt-2 text-xs font-bold"
+                    style={{ color: theme.text }}
+                  >
+                    Morning Calm
+                  </Text>
+                  <Text
+                    className="text-[10px] mt-0.5"
+                    style={{ color: theme.textSecondary }}
+                  >
+                    Timed session
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <View className="px-4 -mt-1 mb-3">
+                <TouchableOpacity
+                  onPress={() => router.push("/quran")}
+                  className="rounded-[22px] p-4 border"
+                  style={{
+                    backgroundColor: theme.cardBackground,
+                    borderColor: theme.border,
+                  }}
+                >
+                  <View className="flex-row items-center">
+                    <View
+                      className="w-10 h-10 rounded-full items-center justify-center"
+                      style={{ backgroundColor: theme.softAccent }}
+                    >
+                      <MaterialCommunityIcons
+                        name="book-open-page-variant"
+                        size={20}
+                        color={theme.accent}
+                      />
+                    </View>
+                    <View className="ml-3 flex-1">
+                      <Text
+                        className="text-xs font-bold"
+                        style={{ color: theme.text }}
+                      >
+                        16 Line Quran Reading
+                      </Text>
+                      <Text
+                        className="text-[10px] mt-0.5"
+                        style={{ color: theme.textSecondary }}
+                      >
+                        Mushaf-style page view (1-604)
+                      </Text>
+                    </View>
+                    <MaterialCommunityIcons
+                      name="chevron-right"
+                      size={20}
+                      color={theme.textSecondary}
+                    />
+                  </View>
                 </TouchableOpacity>
               </View>
 
@@ -271,12 +401,16 @@ export default function AyahScreen() {
                 onFav={() => current && toggleFavorite(current.id)}
                 onNote={() => setShowNoteModal(true)}
                 theme={theme}
+                fontLoaded={fontLoaded}
               />
 
               {/* Filter */}
               <View className="px-4 mt-3 mb-2">
                 <View className="flex-row items-center gap-2">
-                  {[{ label: "All", value: false }, { label: "Favorites", value: true }].map((opt) => {
+                  {[
+                    { label: "All", value: false },
+                    { label: "Favorites", value: true },
+                  ].map((opt) => {
                     const active = showFavoritesOnly === opt.value;
                     return (
                       <TouchableOpacity
@@ -284,17 +418,27 @@ export default function AyahScreen() {
                         onPress={() => setShowFavoritesOnly(opt.value)}
                         className="rounded-full px-4 py-2 border"
                         style={{
-                          backgroundColor: active ? theme.accent : theme.cardBackground,
+                          backgroundColor: active
+                            ? theme.accent
+                            : theme.cardBackground,
                           borderColor: active ? theme.accent : theme.border,
                         }}
                       >
-                        <Text className="text-xs font-bold" style={{ color: active ? "#fff" : theme.textSecondary }}>
+                        <Text
+                          className="text-xs font-bold"
+                          style={{
+                            color: active ? "#fff" : theme.textSecondary,
+                          }}
+                        >
                           {opt.label}
                         </Text>
                       </TouchableOpacity>
                     );
                   })}
-                  <Text className="ml-auto text-xs" style={{ color: theme.textSecondary }}>
+                  <Text
+                    className="ml-auto text-xs"
+                    style={{ color: theme.textSecondary }}
+                  >
                     {filteredAyat.length} ayahs
                   </Text>
                 </View>
@@ -308,6 +452,7 @@ export default function AyahScreen() {
               isFav={favorites.includes(item.id)}
               onPress={chooseAyah}
               theme={theme}
+              fontLoaded={fontLoaded}
             />
           )}
         />
@@ -317,13 +462,23 @@ export default function AyahScreen() {
           <View className="flex-1 justify-end bg-black/50 px-4 pb-8">
             <View
               className="rounded-[32px] p-6 border"
-              style={{ backgroundColor: theme.background, borderColor: theme.border }}
+              style={{
+                backgroundColor: theme.background,
+                borderColor: theme.border,
+              }}
             >
-              <Text className="text-lg font-bold mb-1" style={{ color: theme.text }}>
+              <Text
+                className="text-lg font-bold mb-1"
+                style={{ color: theme.text }}
+              >
                 Personal Reflection
               </Text>
-              <Text className="text-xs italic mb-4" numberOfLines={2} style={{ color: theme.textSecondary }}>
-                "{current?.translation}"
+              <Text
+                className="text-xs italic mb-4"
+                numberOfLines={2}
+                style={{ color: theme.textSecondary }}
+              >
+                &quot;{current?.translation}&quot;
               </Text>
               <TextInput
                 multiline
@@ -348,7 +503,12 @@ export default function AyahScreen() {
                   className="flex-1 rounded-2xl py-3 items-center border"
                   style={{ borderColor: theme.border }}
                 >
-                  <Text className="font-bold" style={{ color: theme.textSecondary }}>Cancel</Text>
+                  <Text
+                    className="font-bold"
+                    style={{ color: theme.textSecondary }}
+                  >
+                    Cancel
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={saveNote}

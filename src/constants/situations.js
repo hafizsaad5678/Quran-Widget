@@ -1,40 +1,60 @@
+const TYPE_META = {
+  sabr: {
+    subtitle: "Patience brings strength and nearness to Allah.",
+    icon: "shield-outline",
+  },
+  anger: {
+    subtitle: "Respond with calm, mercy, and restraint.",
+    icon: "emoticon-angry-outline",
+  },
+  stress: {
+    subtitle: "Find relief through remembrance and trust.",
+    icon: "water",
+  },
+  gratitude: {
+    subtitle: "Shukr opens doors to more blessings.",
+    icon: "hands-pray",
+  },
+  sadness: {
+    subtitle: "Allah sees your pain and never leaves you.",
+    icon: "weather-night",
+  },
+};
+
 export const SITUATIONS = [
   {
-    key: "stress",
-    title: "Stress & Anxiety",
-    subtitle: "Find stillness in remembrance",
-    icon: "water",
-    ayahIds: ["94:5", "94:6", "2:153", "2:286", "2:155"],
+    title: "Stay Strong - Allah is with the Patient",
+    type: "sabr",
+    ayahs: ["2:153", "94:5", "94:6", "3:200", "16:127"],
   },
   {
-    key: "fear",
-    title: "Fear & Worry",
-    subtitle: "Hold onto trust in Allah",
-    icon: "shield-outline",
-    ayahIds: ["3:173", "12:87", "3:139", "8:29", "39:53"],
+    title: "Control Anger, Choose Peace",
+    type: "anger",
+    ayahs: ["3:134", "7:199", "42:37", "41:34", "24:22"],
   },
   {
-    key: "rizq",
-    title: "Rizq & Provision",
-    subtitle: "Provision and ease from Allah",
-    icon: "hand-coin-outline",
-    ayahIds: ["65:3", "16:97", "2:216", "51:56", "67:2"],
+    title: "Find Peace in Allah",
+    type: "stress",
+    ayahs: ["13:28", "2:286", "65:3", "20:46", "9:51"],
   },
   {
-    key: "peace",
-    title: "Seeking Peace",
-    subtitle: "Calm your heart with Quran",
-    icon: "leaf",
-    ayahIds: ["13:28", "2:186", "7:56", "33:41", "50:16"],
+    title: "Be Grateful - Increase Your Blessings",
+    type: "gratitude",
+    ayahs: ["14:7", "10:58", "16:18", "2:152", "93:11"],
   },
   {
-    key: "motivation",
-    title: "Motivation",
-    subtitle: "Renew your purpose through divine wisdom",
-    icon: "lightning-bolt-outline",
-    ayahIds: ["29:69", "3:160", "13:11", "103:2", "103:3"],
+    title: "Allah Knows Your Pain",
+    type: "sadness",
+    ayahs: ["93:3", "12:86", "3:139", "94:5", "94:6"],
   },
-];
+].map((item) => ({
+  ...item,
+  key: item.type,
+  ayahIds: item.ayahs,
+  subtitle:
+    TYPE_META[item.type]?.subtitle || "Quranic guidance for your situation.",
+  icon: TYPE_META[item.type]?.icon || "book-open-page-variant",
+}));
 
 export const findSituation = (situationKey) => {
   return SITUATIONS.find((item) => item.key === situationKey) || null;

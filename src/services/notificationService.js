@@ -21,6 +21,37 @@ const isStoreClient = Constants?.executionEnvironment === "storeClient";
 const shouldSkipNotifications =
   Platform.OS === "web" || isRunningInExpoGo || isExpoGo || isStoreClient;
 
+export const areNotificationsAvailable = !shouldSkipNotifications;
+
+const MESSAGE_TEMPLATES = [
+  "A gentle reminder to open Quran and let your heart rest.",
+  "Take one quiet minute with an ayah today.",
+  "Keep your streak alive with one sincere reflection.",
+  "Pause, breathe, and reconnect with Allah's words.",
+];
+
+const pickByDay = (items) => {
+  const day = new Date().getDate();
+  return items[day % items.length];
+};
+
+const buildReminderTitle = (window) => {
+  if (window === "afternoon") return "Afternoon Quran Pause";
+  if (window === "evening") return "Evening Quran Reflection";
+  return "Morning Quran Reflection";
+};
+
+const buildReminderBody = (ayah, translationKey) => {
+  const translated = applyTranslationProfile(ayah.translation, translationKey);
+  const compact = String(translated || "")
+    .replace(/\s+/g, " ")
+    .trim();
+  const trimmed =
+    compact.length > 110 ? `${compact.slice(0, 107)}...` : compact;
+  const softLine = pickByDay(MESSAGE_TEMPLATES);
+  return `${softLine} ${trimmed}`.trim();
+};
+
 const getNotificationsModule = async () => {
   if (shouldSkipNotifications) return null;
 
@@ -81,9 +112,19 @@ export const scheduleNotifications = async () => {
     const reminder = await getReminderSettings();
     const translationKey = await getTranslationKey();
 
+    // Always clear previously scheduled reminders before re-applying.
+    await Notifications.cancelAllScheduledNotificationsAsync();
+
+    if (reminder?.enabled === false) {
+      return true;
+    }
+
     let hour = 8;
     let minute = 0;
-    if (reminder.window === "evening") {
+    if (reminder.window === "afternoon") {
+      hour = 13;
+      minute = 0;
+    } else if (reminder.window === "evening") {
       hour = 19;
       minute = 15;
     } else if (reminder.window === "custom") {
@@ -91,18 +132,15 @@ export const scheduleNotifications = async () => {
       minute = reminder.customMinute;
     }
 
-    const body = applyTranslationProfile(ayah.translation, translationKey);
+    const body = buildReminderBody(ayah, translationKey);
     const reflection = getReflectionLine(ayah.id);
 
     // Ensure channel exists
     await createNotificationChannel();
 
-    // Cancel all existing notifications
-    await Notifications.cancelAllScheduledNotificationsAsync();
-
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: `Daily Ayah - ${ayah.surahName} ${ayah.ayahNumber}`,
+        title: buildReminderTitle(reminder.window),
         body,
         subtitle: reflection,
         sound: true,
@@ -139,12 +177,23 @@ export const updateReminderWindow = async (
   customHour = 8,
   customMinute = 0,
 ) => {
+  const current = await getReminderSettings();
   await saveReminderSettings({
+    enabled: current?.enabled !== false,
     window,
     customHour,
     customMinute,
   });
-  await scheduleNotifications();
+  return scheduleNotifications();
+};
+
+export const setReminderEnabled = async (enabled) => {
+  const current = await getReminderSettings();
+  await saveReminderSettings({
+    ...current,
+    enabled,
+  });
+  return scheduleNotifications();
 };
 
 export const setupNotificationListeners = async () => {
@@ -178,6 +227,12 @@ export const setupNotificationListeners = async () => {
 export const initializeNotifications = async () => {
   try {
     if (shouldSkipNotifications) {
+      return;
+    }
+
+    const reminder = await getReminderSettings();
+    if (reminder?.enabled === false) {
+      await scheduleNotifications();
       return;
     }
 

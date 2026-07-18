@@ -55,10 +55,6 @@ class AyahWidgetProvider : AppWidgetProvider() {
             val surahNumber = nonBlank(prefs.getString("surahNumber", null), "1")
             val tapAction = nonBlank(prefs.getString("tap_action", null), "home")
 
-            val bgColor = safeColor(
-                prefs.getInt("style_bg_color", 0xFFFFF7E0.toInt()),
-                0xFFFFF7E0.toInt()
-            )
             val arabicColor = safeColor(
                 prefs.getInt("style_arabic_color", 0xFF3D2B00.toInt()),
                 0xFF3D2B00.toInt()
@@ -82,7 +78,6 @@ class AyahWidgetProvider : AppWidgetProvider() {
             views.setTextViewText(R.id.widget_translation, translation)
             views.setTextViewText(R.id.widget_surah, "$surah : $ayahNum")
 
-            views.setInt(R.id.widget_container, "setBackgroundColor", bgColor)
             views.setTextColor(R.id.widget_arabic, arabicColor)
             views.setTextColor(R.id.widget_translation, translationColor)
             views.setTextColor(R.id.widget_surah, metaColor)
