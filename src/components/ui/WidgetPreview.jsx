@@ -48,6 +48,24 @@ export default function WidgetPreview({ data }) {
 
   const isHomePreview = previewStyle === "home";
 
+  const resolveArabicFont = () => {
+    if (!data) return ARABIC_WIDGET_FONT;
+    const f = data.arabicFont || "platform";
+    if (f === "platform") return ARABIC_WIDGET_FONT;
+    if (f === "serif") return "serif";
+    if (f === "sans") return "sans-serif";
+    return f;
+  };
+
+  const resolveTranslationFont = () => {
+    if (!data) return CLEAN_WIDGET_FONT;
+    const f = data.translationFont || "platform";
+    if (f === "platform") return CLEAN_WIDGET_FONT;
+    if (f === "serif") return "serif";
+    if (f === "sans") return "sans-serif";
+    return f;
+  };
+
   return (
     <View
       className="w-full overflow-hidden rounded-[32px] border p-5"
@@ -113,7 +131,7 @@ export default function WidgetPreview({ data }) {
           style={{
             color: arabicColor || "#d3b45c",
             fontSize: arabicSize || 24,
-            fontFamily: ARABIC_WIDGET_FONT,
+            fontFamily: resolveArabicFont(),
             lineHeight: (arabicSize || 24) * 1.35,
           }}
           dir="rtl"
@@ -126,7 +144,7 @@ export default function WidgetPreview({ data }) {
           style={{
             color: translationColor || "#ddd7c8",
             fontSize: translationSize || 10,
-            fontFamily: CLEAN_WIDGET_FONT,
+            fontFamily: resolveTranslationFont(),
             lineHeight: (translationSize || 10) * 1.4,
             fontStyle: isHomePreview ? "italic" : "normal",
           }}

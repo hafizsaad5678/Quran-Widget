@@ -69,6 +69,8 @@ export function useWidgetSettings() {
         arabicSize: fonts.arabicSize ?? 20,
         translationSize: fonts.translationSize ?? 14,
         lineSpacing: fonts.lineSpacing ?? 1.25, // Load line spacing
+        arabicFont: fonts.arabicFont ?? "platform",
+        translationFont: fonts.translationFont ?? "platform",
         backgroundColor:
           styleSettings?.backgroundColor || baseStyle.backgroundColor,
         arabicColor: styleSettings?.arabicColor || baseStyle.arabicColor,
@@ -109,6 +111,8 @@ export function useWidgetSettings() {
           arabicSize: widgetSettings.arabicSize,
           translationSize: widgetSettings.translationSize,
           lineSpacing: widgetSettings.lineSpacing || 1.25, // Save line spacing
+          arabicFont: widgetSettings.arabicFont,
+          translationFont: widgetSettings.translationFont,
         }),
         saveWidgetLayoutSettings({
           width: widgetSettings.width,

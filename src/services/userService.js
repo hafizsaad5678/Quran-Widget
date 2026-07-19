@@ -115,6 +115,8 @@ export const getWidgetFontSettings = async () => {
     arabicSize: 20,
     translationSize: 14,
     lineSpacing: 1.25,
+    arabicFont: "platform",
+    translationFont: "platform",
   });
 };
 
@@ -157,15 +159,17 @@ export const saveWidgetFontSettings = async (settings) => {
       2,
       Math.max(1, Number(settings?.lineSpacing || 1.25)),
     ),
+    arabicFont: settings?.arabicFont || "platform",
+    translationFont: settings?.translationFont || "platform",
   };
   await setJson(STORAGE_KEYS.WIDGET_FONT_SETTINGS, normalized);
-  
+
   // Also update store so HomeScreen gets new font settings immediately
   const store = getStoreApi();
-  store.getState().updateSettings({ 
-    widgetFontSettings: normalized 
+  store.getState().updateSettings({
+    widgetFontSettings: normalized,
   });
-  
+
   return normalized;
 };
 

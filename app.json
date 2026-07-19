@@ -43,6 +43,12 @@
         "projectId": "46945718-6977-4167-ace5-d6f14c465b4a"
       }
     },
-    "owner": "hmzahmza"
+    "owner": "hmzahmza",
+    "ios": {
+      "bundleIdentifier": "com.qurandaily.ayah",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    }
   }
 }

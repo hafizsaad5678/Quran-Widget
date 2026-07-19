@@ -13,6 +13,7 @@ import ColorPicker from "react-native-wheel-color-picker";
 import {
   COLOR_FIELDS,
   INTERVAL_OPTIONS,
+  FONT_OPTIONS,
 } from "../../constants/widgetSettingsUi";
 import WidgetPreview from "./WidgetPreview";
 
@@ -320,6 +321,8 @@ export default function WidgetSettingsForm({
                   glassEnabled: widgetSettings.glassEnabled,
                   glassOpacity: widgetSettings.glassOpacity,
                   borderOpacity: widgetSettings.borderOpacity,
+                  arabicFont: widgetSettings.arabicFont,
+                  translationFont: widgetSettings.translationFont,
                 }}
               />
             </View>
@@ -388,6 +391,45 @@ export default function WidgetSettingsForm({
               }}
               t={t}
             />
+          </Section>
+
+          <Section
+            title="Fonts"
+            icon="format-font"
+            note="Choose Arabic and translation font families for preview."
+            t={t}
+          >
+            <View className="mt-2">
+              <Text className="text-xs font-bold" style={{ color: t.text }}>
+                Arabic Font
+              </Text>
+              <View className="mt-2 flex-row flex-wrap gap-2">
+                {FONT_OPTIONS.arabic.map((opt) => (
+                  <BubbleChip
+                    key={`arabic-font-${opt.key}`}
+                    label={opt.label}
+                    active={widgetSettings.arabicFont === opt.key}
+                    onPress={() => onSetColor("arabicFont", opt.key)}
+                    t={t}
+                  />
+                ))}
+              </View>
+
+              <Text className="mt-3 text-xs font-bold" style={{ color: t.text }}>
+                Translation Font
+              </Text>
+              <View className="mt-2 flex-row flex-wrap gap-2">
+                {FONT_OPTIONS.translation.map((opt) => (
+                  <BubbleChip
+                    key={`translation-font-${opt.key}`}
+                    label={opt.label}
+                    active={widgetSettings.translationFont === opt.key}
+                    onPress={() => onSetColor("translationFont", opt.key)}
+                    t={t}
+                  />
+                ))}
+              </View>
+            </View>
           </Section>
 
           <Section

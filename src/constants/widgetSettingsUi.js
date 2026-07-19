@@ -6,3 +6,16 @@ export const COLOR_FIELDS = [
   { key: "translationColor", label: "Translation Text" },
   { key: "metaColor", label: "Meta Text" },
 ];
+
+export const FONT_OPTIONS = {
+  arabic: [
+    { key: "platform", label: "Platform" },
+    { key: "serif", label: "Serif" },
+    { key: "sans", label: "Sans" },
+  ],
+  translation: [
+    { key: "platform", label: "Platform" },
+    { key: "sans", label: "Sans" },
+    { key: "serif", label: "Serif" },
+  ],
+};

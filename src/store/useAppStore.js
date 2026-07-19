@@ -65,6 +65,8 @@ export const useAppStore = create(
           arabicSize: 20,
           translationSize: 14,
           lineSpacing: 1.25,
+          arabicFont: "platform",
+          translationFont: "platform",
         },
         reminderSettings: {
           enabled: true,
