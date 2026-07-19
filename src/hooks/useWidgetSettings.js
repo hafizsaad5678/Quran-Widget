@@ -33,7 +33,9 @@ const initialWidgetSettings = {
   intervalHours: 6,
   arabicSize: 20,
   translationSize: 14,
-  lineSpacing: 1.25, // Added line spacing
+  lineSpacing: 1.25,
+  arabicFont: "platform",       // Font family for Arabic
+  translationFont: "platform",  // Font family for translation
   backgroundColor: WIDGET_STYLES.nightGold.backgroundColor,
   arabicColor: WIDGET_STYLES.nightGold.arabicColor,
   translationColor: WIDGET_STYLES.nightGold.translationColor,
@@ -68,7 +70,7 @@ export function useWidgetSettings() {
         intervalHours: intervalHours ?? 6,
         arabicSize: fonts.arabicSize ?? 20,
         translationSize: fonts.translationSize ?? 14,
-        lineSpacing: fonts.lineSpacing ?? 1.25, // Load line spacing
+        lineSpacing: fonts.lineSpacing ?? 1.25,
         arabicFont: fonts.arabicFont ?? "platform",
         translationFont: fonts.translationFont ?? "platform",
         backgroundColor:

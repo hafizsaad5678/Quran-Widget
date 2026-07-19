@@ -150,10 +150,10 @@ export const getWidgetInterval = async () => {
 
 export const saveWidgetFontSettings = async (settings) => {
   const normalized = {
-    arabicSize: Math.min(32, Math.max(14, Number(settings?.arabicSize || 20))),
+    arabicSize: Math.min(30, Math.max(14, Number(settings?.arabicSize || 20))),   // max 30 matches Android clamp
     translationSize: Math.min(
-      26,
-      Math.max(12, Number(settings?.translationSize || 14)),
+      22,
+      Math.max(10, Number(settings?.translationSize || 14)),
     ),
     lineSpacing: Math.min(
       2,

@@ -358,7 +358,7 @@ export default function WidgetSettingsForm({
               valueText={`${widgetSettings.arabicSize}pt`}
               value={Number(widgetSettings.arabicSize) || 20}
               min={14}
-              max={40}
+              max={30}
               step={1}
               onChange={(v) => {
                 onSetColor("arabicSize", Math.round(v));
@@ -371,7 +371,7 @@ export default function WidgetSettingsForm({
               valueText={`${widgetSettings.translationSize}pt`}
               value={Number(widgetSettings.translationSize) || 14}
               min={10}
-              max={24}
+              max={22}
               step={1}
               onChange={(v) => {
                 onSetColor("translationSize", Math.round(v));
