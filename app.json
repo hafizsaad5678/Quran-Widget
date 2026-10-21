@@ -32,7 +32,11 @@
           "root": "./src/app"
         }
       ],
-      "expo-font"
+      "expo-font",
+      "expo-sharing",
+      "expo-splash-screen",
+      "expo-status-bar",
+      "expo-audio"
     ],
     "experiments": {
       "typedRoutes": true
