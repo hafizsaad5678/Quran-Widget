@@ -1,4 +1,4 @@
-import { Audio } from "expo-av";
+import { Audio } from "../services/audioCompat";
 import * as Network from "expo-network";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAppStore } from "../store/useAppStore";
