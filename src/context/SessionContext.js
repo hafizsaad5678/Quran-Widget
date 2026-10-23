@@ -7,6 +7,7 @@ import React, {
     useState,
 } from "react";
 import { pushUserDataToCloud } from "../services/cloudSyncService";
+import { isSupabaseConfigured } from "../services/supabaseClient";
 import { useAppStore } from "../store/useAppStore";
 
 const SessionContext = createContext(null);
@@ -49,6 +50,8 @@ export function SessionProvider({ children }) {
     if (!session?.completed || streakMarked.current) return;
     streakMarked.current = true;
     completeReadingSession(session.durationSeconds, session.surahName);
+    // Cloud sync is disabled (offline app): skip the connectivity ping.
+    if (isSupabaseConfigured)
     fetch("https://www.google.com/generate_204", {
       method: "HEAD",
       cache: "no-cache",

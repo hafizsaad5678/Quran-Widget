@@ -2,6 +2,13 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createClient } from "@supabase/supabase-js";
 import { Platform } from "react-native";
 
+/**
+ * Master switch. The app is fully offline: Supabase (auth + cloud sync) is
+ * disabled. Set to true to bring it back; everything else already guards on
+ * `isSupabaseConfigured` / `supabase` being null.
+ */
+export const CLOUD_ENABLED = false;
+
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -21,7 +28,9 @@ export const SUPABASE_AUTH_STORAGE_KEY = supabaseProjectRef
   ? `sb-${supabaseProjectRef}-auth-token`
   : null;
 
-export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
+export const isSupabaseConfigured = Boolean(
+  CLOUD_ENABLED && supabaseUrl && supabaseAnonKey,
+);
 
 const isWeb = Platform.OS === "web";
 const hasWindow = typeof window !== "undefined";

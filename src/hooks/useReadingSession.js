@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { pushUserDataToCloud } from "../services/cloudSyncService";
+import { isSupabaseConfigured } from "../services/supabaseClient";
 import { useAppStore } from "../store/useAppStore";
 
 /**
@@ -55,6 +56,8 @@ export const useReadingSession = (durationSeconds, surahName = "") => {
     completeReadingSession(durationSeconds, surahName);
 
     // Try cloud sync
+    // Cloud sync is disabled (offline app): skip the connectivity ping.
+    if (isSupabaseConfigured)
     fetch("https://www.google.com/generate_204", {
       method: "HEAD",
       cache: "no-cache",
