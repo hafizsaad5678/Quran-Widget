@@ -4,13 +4,7 @@ import {
 } from "@expo-google-fonts/scheherazade-new";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -18,21 +12,50 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { mergeColorMap, resolveColor } from "react-native-quran-tajweed";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { getSurahStartPage } from "../constants/mushafPages";
 import { getAllSurahs } from "../constants/quranCurated";
+import { getPageAyahs } from "../services/mushafData";
 
-const API_BASE = "https://api.alquran.cloud/v1/page";
-const API_SURAH_BASE = "https://api.alquran.cloud/v1/surah";
 const MIN_PAGE = 1;
 const MAX_PAGE = 604;
+const TEXT_COLOR = "#111111";
 
+// Same palette the reader always had (4 rule groups, everything else plain).
 const TAJWEED_COLORS = {
   ghunnah: "#c62828",
   ikhfa: "#2e7d32",
   qalqalah: "#1565c0",
   madd: "#b26a00",
-  normal: "#111111",
 };
+
+const TAJWEED_COLOR_MAP = mergeColorMap({
+  // Ghunnah: red
+  ghunnah: TAJWEED_COLORS.ghunnah,
+  idgham_ghunnah: TAJWEED_COLORS.ghunnah,
+  // Ikhfa / idgham / iqlab: green
+  ikhafa: TAJWEED_COLORS.ikhfa,
+  ikhafa_shafawi: TAJWEED_COLORS.ikhfa,
+  idgham_shafawi: TAJWEED_COLORS.ikhfa,
+  idgham_wo_ghunnah: TAJWEED_COLORS.ikhfa,
+  idgham_mutajanisayn: TAJWEED_COLORS.ikhfa,
+  idgham_mutaqaribayn: TAJWEED_COLORS.ikhfa,
+  iqlab: TAJWEED_COLORS.ikhfa,
+  // Qalqalah: blue
+  qalaqah: TAJWEED_COLORS.qalqalah,
+  // Madd: orange
+  madda_normal: TAJWEED_COLORS.madd,
+  madda_permissible: TAJWEED_COLORS.madd,
+  madda_obligatory: TAJWEED_COLORS.madd,
+  madda_necessary: TAJWEED_COLORS.madd,
+  // Silent letters / tafkhim: no extra color (plain dark text)
+  ham_wasl: null,
+  laam_shamsiyah: null,
+  slnt: null,
+  tafkhim: null,
+  tarqiq: null,
+});
 
 const BISMILLAH = "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ";
 
@@ -44,60 +67,12 @@ function toArabicDigits(value) {
     .join("");
 }
 
-function tajweedTagToColor(tag) {
-  if (tag === "m") return TAJWEED_COLORS.ghunnah;
-  if (tag === "l") return TAJWEED_COLORS.ikhfa;
-  if (tag === "p") return TAJWEED_COLORS.qalqalah;
-  if (tag === "n") return TAJWEED_COLORS.madd;
-  return TAJWEED_COLORS.normal;
-}
-
-function parseTajweedText(rawText) {
-  const segments = [];
-  let i = 0;
-
-  const pushSegment = (text, color) => {
-    if (!text) return;
-    const last = segments[segments.length - 1];
-    if (last && last.color === color) {
-      last.text += text;
-      return;
-    }
-    segments.push({ text, color });
-  };
-
-  while (i < rawText.length) {
-    if (rawText[i] === "[") {
-      const match = rawText.slice(i).match(/^\[([a-z])(?::\d+)?\[/i);
-      if (match) {
-        const code = match[1].toLowerCase();
-        i += match[0].length;
-        const end = rawText.indexOf("]", i);
-        if (end !== -1) {
-          const tokenText = rawText.slice(i, end);
-          pushSegment(tokenText, tajweedTagToColor(code));
-          i = end + 1;
-          continue;
-        }
-      }
-    }
-
-    pushSegment(rawText[i], TAJWEED_COLORS.normal);
-    i += 1;
-  }
-
-  return segments;
-}
-
 const AyahLine = React.memo(function AyahLine({
   ayah,
   isRukuStart,
   fontLoaded,
 }) {
-  const segments = useMemo(
-    () => parseTajweedText(ayah.text || ""),
-    [ayah.text],
-  );
+  const segments = ayah.segments;
 
   return (
     <View style={{ position: "relative", paddingRight: 20, marginBottom: 4 }}>
@@ -119,18 +94,24 @@ const AyahLine = React.memo(function AyahLine({
         style={{
           textAlign: "justify",
           writingDirection: "rtl",
-          color: TAJWEED_COLORS.normal,
+          color: TEXT_COLOR,
           fontSize: 22,
           lineHeight: 48,
           fontFamily: fontLoaded ? "ScheherazadeNew_400Regular" : undefined,
         }}
       >
         {segments.map((segment, idx) => (
-          <Text key={`${ayah.number}-${idx}`} style={{ color: segment.color }}>
+          <Text
+            key={`${ayah.number}-${idx}`}
+            style={{
+              color:
+                resolveColor(segment.rules, TAJWEED_COLOR_MAP) || TEXT_COLOR,
+            }}
+          >
             {segment.text}
           </Text>
         ))}
-        <Text style={{ color: TAJWEED_COLORS.normal }}>
+        <Text style={{ color: TEXT_COLOR }}>
           {` ﴾${toArabicDigits(ayah.numberInSurah)}﴿`}
         </Text>
       </Text>
@@ -146,109 +127,15 @@ export default function QuranPageReaderScreen() {
     : params?.surah;
   const initialSurah = Number(rawSurahParam || 0);
   const [fontsLoaded] = useFonts({ ScheherazadeNew_400Regular });
-  const [pageNumber, setPageNumber] = useState(1);
-  const [readyToLoad, setReadyToLoad] = useState(!(initialSurah > 0));
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [pageAyahs, setPageAyahs] = useState([]);
+  const [pageNumber, setPageNumber] = useState(
+    initialSurah > 0 ? getSurahStartPage(initialSurah) : 1,
+  );
   const [selectedSurah, setSelectedSurah] = useState(
     initialSurah > 0 ? initialSurah : null,
   );
 
-  const cacheRef = useRef({});
-
-  const fetchTajweedPage = useCallback(async (page) => {
-    const cached = cacheRef.current[page];
-    if (cached) return cached;
-
-    const response = await fetch(`${API_BASE}/${page}/quran-tajweed`);
-    if (!response.ok) throw new Error("Failed to load Tajweed page.");
-
-    const payload = await response.json();
-    const ayahs = payload?.data?.ayahs ?? [];
-    if (!Array.isArray(ayahs)) throw new Error("Unexpected Tajweed response.");
-
-    cacheRef.current[page] = ayahs;
-    return ayahs;
-  }, []);
-
-  const loadPage = useCallback(
-    async (page) => {
-      setLoading(true);
-      setError("");
-
-      try {
-        const ayahs = await fetchTajweedPage(page);
-        setPageAyahs(ayahs);
-
-        // Warm adjacent pages to reduce wait time on Next/Previous.
-        const neighbors = [page - 1, page + 1].filter(
-          (candidate) => candidate >= MIN_PAGE && candidate <= MAX_PAGE,
-        );
-        for (const neighbor of neighbors) {
-          if (!cacheRef.current[neighbor]) {
-            void fetchTajweedPage(neighbor).catch(() => {});
-          }
-        }
-      } catch (err) {
-        setError(err?.message || "Could not load this page.");
-        setPageAyahs([]);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [fetchTajweedPage],
-  );
-
-  const findFirstPageForSurah = useCallback(async (surahNumber) => {
-    const response = await fetch(
-      `${API_SURAH_BASE}/${surahNumber}/quran-tajweed`,
-    );
-    if (!response.ok) {
-      throw new Error("Could not load selected surah quickly.");
-    }
-    const payload = await response.json();
-    const firstAyah = payload?.data?.ayahs?.[0];
-    const page = Number(firstAyah?.page || 1);
-    return Math.max(MIN_PAGE, Math.min(MAX_PAGE, page));
-  }, []);
-
-  useEffect(() => {
-    if (!initialSurah || Number.isNaN(initialSurah)) {
-      setSelectedSurah(null);
-      setReadyToLoad(true);
-      return;
-    }
-
-    let active = true;
-
-    const jumpToSurahStart = async () => {
-      setReadyToLoad(false);
-      setLoading(true);
-      setError("");
-      try {
-        const firstPage = await findFirstPageForSurah(initialSurah);
-        if (!active) return;
-        setSelectedSurah(initialSurah);
-        setPageNumber(firstPage);
-      } catch (err) {
-        if (!active) return;
-        setError(err?.message || "Could not locate selected surah.");
-      } finally {
-        if (active) setReadyToLoad(true);
-      }
-    };
-
-    void jumpToSurahStart();
-    return () => {
-      active = false;
-    };
-  }, [findFirstPageForSurah, initialSurah]);
-
-  useEffect(() => {
-    if (!readyToLoad) return;
-    void loadPage(pageNumber);
-  }, [pageNumber, loadPage, readyToLoad]);
+  // Everything is bundled: no loading, no network.
+  const pageAyahs = useMemo(() => getPageAyahs(pageNumber), [pageNumber]);
 
   const surahNames = useMemo(() => {
     const map = {};
@@ -294,7 +181,7 @@ export default function QuranPageReaderScreen() {
           title: ayah?.surah?.name,
         });
 
-        if (surahNo !== 9) {
+        if (surahNo !== 9 && surahNo !== 1) {
           blocks.push({
             type: "bismillah",
             key: `bismillah-${surahNo}`,
@@ -339,50 +226,12 @@ export default function QuranPageReaderScreen() {
         <View style={{ width: 40 }} />
       </View>
 
-      {!readyToLoad || loading || !fontsLoaded ? (
+      {!fontsLoaded ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#111827" />
           <Text style={{ marginTop: 10, color: "#6b7280", fontSize: 13 }}>
-            Loading Tajweed page...
+            Loading...
           </Text>
-        </View>
-      ) : error ? (
-        <View className="flex-1 items-center justify-center px-8">
-          <MaterialCommunityIcons
-            name="alert-circle-outline"
-            size={38}
-            color="#dc2626"
-          />
-          <Text
-            style={{
-              marginTop: 12,
-              color: "#111827",
-              textAlign: "center",
-              fontSize: 15,
-              fontWeight: "600",
-            }}
-          >
-            Could not load page {toArabicDigits(pageNumber)}
-          </Text>
-          <Text
-            style={{
-              marginTop: 8,
-              color: "#6b7280",
-              textAlign: "center",
-              lineHeight: 22,
-            }}
-          >
-            {error}
-          </Text>
-          <TouchableOpacity
-            onPress={() => void loadPage(pageNumber)}
-            className="mt-5 rounded-full px-6 py-3"
-            style={{ backgroundColor: "#111827" }}
-          >
-            <Text style={{ color: "#ffffff", fontWeight: "700", fontSize: 12 }}>
-              Try Again
-            </Text>
-          </TouchableOpacity>
         </View>
       ) : (
         <FlatList
@@ -546,7 +395,7 @@ export default function QuranPageReaderScreen() {
                 <Text style={{ color: TAJWEED_COLORS.madd, fontSize: 12 }}>
                   Madd
                 </Text>
-                <Text style={{ color: TAJWEED_COLORS.normal, fontSize: 12 }}>
+                <Text style={{ color: TEXT_COLOR, fontSize: 12 }}>
                   Normal
                 </Text>
               </View>
@@ -561,16 +410,16 @@ export default function QuranPageReaderScreen() {
             setSelectedSurah(null);
             setPageNumber((prev) => Math.max(MIN_PAGE, prev - 1));
           }}
-          disabled={pageNumber <= MIN_PAGE || loading}
+          disabled={pageNumber <= MIN_PAGE}
           className="flex-1 rounded-full py-3 items-center"
           style={{
             backgroundColor:
-              pageNumber <= MIN_PAGE || loading ? "#e5e7eb" : "#111827",
+              pageNumber <= MIN_PAGE ? "#e5e7eb" : "#111827",
           }}
         >
           <Text
             style={{
-              color: pageNumber <= MIN_PAGE || loading ? "#6b7280" : "#ffffff",
+              color: pageNumber <= MIN_PAGE ? "#6b7280" : "#ffffff",
               fontWeight: "700",
               fontSize: 12,
             }}
@@ -583,16 +432,16 @@ export default function QuranPageReaderScreen() {
             setSelectedSurah(null);
             setPageNumber((prev) => Math.min(MAX_PAGE, prev + 1));
           }}
-          disabled={pageNumber >= MAX_PAGE || loading}
+          disabled={pageNumber >= MAX_PAGE}
           className="flex-1 rounded-full py-3 items-center"
           style={{
             backgroundColor:
-              pageNumber >= MAX_PAGE || loading ? "#e5e7eb" : "#111827",
+              pageNumber >= MAX_PAGE ? "#e5e7eb" : "#111827",
           }}
         >
           <Text
             style={{
-              color: pageNumber >= MAX_PAGE || loading ? "#6b7280" : "#ffffff",
+              color: pageNumber >= MAX_PAGE ? "#6b7280" : "#ffffff",
               fontWeight: "700",
               fontSize: 12,
             }}
