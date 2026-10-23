@@ -1,6 +1,7 @@
 import { Audio } from "../services/audioCompat";
 import * as Network from "expo-network";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { getLocalAudioUri } from "../services/audioStore";
 import { useAppStore } from "../store/useAppStore";
 
 const AYAH_AUDIO_ENDPOINT = "https://api.alquran.cloud/v1/ayah";
@@ -61,6 +62,10 @@ export const useAyahInteraction = () => {
   }, []);
 
   const resolveAyahAudioUrl = useCallback(async (ayah) => {
+    // Offline first: use the downloaded file when it exists.
+    const localUri = getLocalAudioUri(ayah?.globalAyahNumber);
+    if (localUri) return localUri;
+
     let audioUrl = buildCdnAudioUrl(ayah);
     if (audioUrl) return audioUrl;
 
@@ -250,8 +255,11 @@ export const useAyahInteraction = () => {
       const network = await Network.getNetworkStateAsync();
       const hasInternet =
         network.isConnected !== false && network.isInternetReachable !== false;
-      if (!hasInternet) {
-        return { ok: false, message: "No internet connection." };
+      if (!hasInternet && !getLocalAudioUri(ayah.globalAyahNumber)) {
+        return {
+          ok: false,
+          message: "No internet. Download this surah's audio to listen offline.",
+        };
       }
 
       const queueSource =
