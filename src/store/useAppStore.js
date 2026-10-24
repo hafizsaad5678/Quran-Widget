@@ -1,3 +1,4 @@
+import { STREAK_ENABLED } from "../constants/features";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
@@ -24,6 +25,7 @@ const DEFAULT_COLLECTIONS = [
 ];
 
 const buildNextStreak = (streak, dateKey) => {
+  if (!STREAK_ENABLED) return streak;
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
   const yesterdayKey = yesterday.toISOString().slice(0, 10);
@@ -171,7 +173,7 @@ export const useAppStore = create(
       markReadToday: () => {
         const dateKey = todayKey();
         const { streak } = get();
-        if (streak.readDays[dateKey]) return; // already read today
+        if (!STREAK_ENABLED || streak.readDays[dateKey]) return; // already read today
 
         const nextStreak = buildNextStreak(streak, dateKey);
 

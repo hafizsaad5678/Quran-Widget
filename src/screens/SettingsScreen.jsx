@@ -240,7 +240,7 @@ export default function SettingsScreen() {
                 </View>
                 <Text
                   className="ml-4 text-xl font-serif font-bold"
-                  style={{ color: theme.text }}
+                  style={{ color: theme.accent }}
                 >
                   Appearance
                 </Text>
@@ -299,7 +299,7 @@ export default function SettingsScreen() {
                 <View className="ml-4 flex-1">
                   <Text
                     className="text-xl font-serif font-bold"
-                    style={{ color: theme.text }}
+                    style={{ color: theme.accent }}
                   >
                     Notifications
                   </Text>
@@ -307,7 +307,7 @@ export default function SettingsScreen() {
                     className="text-[10px] mt-1"
                     style={{ color: theme.textSecondary }}
                   >
-                    Daily push reminder to continue your streak
+                    Daily reminder to read an ayah
                   </Text>
                 </View>
                 <Switch
@@ -374,7 +374,7 @@ export default function SettingsScreen() {
               </View>
               <Text
                 className="mt-2 text-sm font-bold"
-                style={{ color: theme.text }}
+                style={{ color: theme.accent }}
               >
                 Connect with Ayah Quran
               </Text>
@@ -384,7 +384,7 @@ export default function SettingsScreen() {
               <View className="items-center">
                 <Text
                   className="text-base font-bold mb-1"
-                  style={{ color: theme.text }}
+                  style={{ color: theme.accent }}
                 >
                   {displayName}
                 </Text>

@@ -26,7 +26,7 @@ export const areNotificationsAvailable = !shouldSkipNotifications;
 const MESSAGE_TEMPLATES = [
   "A gentle reminder to open Quran and let your heart rest.",
   "Take one quiet minute with an ayah today.",
-  "Keep your streak alive with one sincere reflection.",
+  "Take a quiet moment for one sincere reflection today.",
   "Pause, breathe, and reconnect with Allah's words.",
 ];
 

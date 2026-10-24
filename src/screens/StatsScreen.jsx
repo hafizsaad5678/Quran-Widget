@@ -1,10 +1,12 @@
 /**
  * StatsScreen — My Journey / Progress
  */
+import InfoRow from "../components/ui/InfoRow";
+import { STREAK_ENABLED } from "../constants/features";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useMemo } from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import BarChart from "../components/ui/BarChart";
 import CircularProgress from "../components/ui/CircularProgress";
@@ -29,7 +31,7 @@ const StatCard = ({ icon, label, value, theme, accent }) => (
         color={accent || theme.accent}
       />
     </View>
-    <Text className="text-xl font-bold" style={{ color: theme.text }}>
+    <Text className="text-xl font-bold" style={{ color: theme.accent }}>
       {value}
     </Text>
     <Text
@@ -149,14 +151,15 @@ export default function StatsScreen() {
             </Text>
             <Text
               className="text-3xl font-serif font-bold"
-              style={{ color: theme.text }}
+              style={{ color: theme.accent }}
             >
               Journey Stats
             </Text>
           </View>
 
           {/* Streak highlight */}
-          <GlassCard
+          {STREAK_ENABLED && (
+<GlassCard
             className="rounded-[28px] p-6 mb-4 flex-row items-center"
             style={{ backgroundColor: theme.cardBackground }}
           >
@@ -173,7 +176,7 @@ export default function StatsScreen() {
             <View className="flex-1">
               <Text
                 className="text-4xl font-bold"
-                style={{ color: theme.text }}
+                style={{ color: theme.accent }}
               >
                 {stats.current}
                 <Text
@@ -205,15 +208,18 @@ export default function StatsScreen() {
               </View>
             )}
           </GlassCard>
+          )}
 
           {/* Stat grid */}
           <View className="flex-row gap-3 mb-4">
-            <StatCard
+            {STREAK_ENABLED && (
+<StatCard
               icon="trophy-outline"
               label="Best Streak"
               value={`${stats.best}d`}
               theme={theme}
             />
+)}
             <StatCard
               icon="heart-outline"
               label="Favorites"
@@ -226,16 +232,19 @@ export default function StatsScreen() {
               value={history.length}
               theme={theme}
             />
-            <StatCard
+            {STREAK_ENABLED && (
+<StatCard
               icon="calendar-check"
               label="This Week"
               value={`${gamification.weeklyCompletedDays}/7`}
               theme={theme}
             />
+)}
           </View>
 
           {/* Reward / Badge */}
-          <GlassCard
+          {STREAK_ENABLED && (
+<GlassCard
             className="rounded-[28px] p-5 mb-4"
             style={{ backgroundColor: theme.cardBackground }}
           >
@@ -254,7 +263,7 @@ export default function StatsScreen() {
                 <View className="ml-3">
                   <Text
                     className="text-sm font-bold"
-                    style={{ color: theme.text }}
+                    style={{ color: theme.accent }}
                   >
                     {gamification.tier.name} Badge
                   </Text>
@@ -276,6 +285,7 @@ export default function StatsScreen() {
               )}
             </View>
           </GlassCard>
+          )}
 
           {/* Last reading session */}
           {lastSession && (
@@ -296,7 +306,7 @@ export default function StatsScreen() {
               <View className="flex-1">
                 <Text
                   className="text-sm font-bold"
-                  style={{ color: theme.text }}
+                  style={{ color: theme.accent }}
                 >
                   Last Reading Session
                 </Text>
@@ -325,13 +335,14 @@ export default function StatsScreen() {
           )}
 
           {/* Weekly bar chart */}
-          <GlassCard
+          {STREAK_ENABLED && (
+<GlassCard
             className="rounded-[28px] p-5 mb-4"
             style={{ backgroundColor: theme.cardBackground }}
           >
             <Text
               className="text-sm font-bold mb-4"
-              style={{ color: theme.text }}
+              style={{ color: theme.accent }}
             >
               This Week
             </Text>
@@ -342,14 +353,16 @@ export default function StatsScreen() {
               target={`${gamification.weeklyCompletedDays}/7 Days`}
             />
           </GlassCard>
+          )}
 
           {/* Daily goal */}
-          <GlassCard
+          {STREAK_ENABLED && (
+<GlassCard
             className="rounded-[28px] p-5 mb-4"
             style={{ backgroundColor: theme.cardBackground }}
           >
             <View className="flex-row items-center justify-between">
-              <Text className="text-sm font-bold" style={{ color: theme.text }}>
+              <Text className="text-sm font-bold" style={{ color: theme.accent }}>
                 Daily Goal (5 min)
               </Text>
               <Text
@@ -372,15 +385,17 @@ export default function StatsScreen() {
               />
             </View>
           </GlassCard>
+          )}
 
           {/* Weekly target */}
-          <GlassCard
+          {STREAK_ENABLED && (
+<GlassCard
             className="rounded-[28px] p-6 items-center mb-4"
             style={{ backgroundColor: theme.cardBackground }}
           >
             <Text
               className="text-sm font-bold mb-4 self-start"
-              style={{ color: theme.text }}
+              style={{ color: theme.accent }}
             >
               Weekly Target
             </Text>
@@ -392,67 +407,37 @@ export default function StatsScreen() {
               sublabel="GOAL DAYS"
             />
           </GlassCard>
+          )}
 
           {/* Recent history */}
           {history.length > 0 && (
             <View className="mb-4">
               <Text
                 className="text-sm font-bold mb-3"
-                style={{ color: theme.text }}
+                style={{ color: theme.accent }}
               >
                 Recently Read
               </Text>
-              {history.slice(0, 5).map((item, idx) => (
-                <TouchableOpacity
-                  key={`${item.id}-${idx}`}
-                  onPress={() =>
-                    router.push({
-                      pathname: "/ayah",
-                      params: {
-                        surah: item.surahNumber,
-                        ayah: item.ayahNumber,
-                      },
-                    })
-                  }
-                  className="flex-row items-center rounded-2xl border p-4 mb-2"
-                  style={{
-                    backgroundColor: theme.cardBackground,
-                    borderColor: theme.border,
-                  }}
-                >
-                  <View
-                    className="w-9 h-9 rounded-full items-center justify-center mr-3"
-                    style={{ backgroundColor: theme.softAccent }}
-                  >
-                    <Text
-                      className="text-[9px] font-bold"
-                      style={{ color: theme.accent }}
-                    >
-                      {item.surahNumber}:{item.ayahNumber}
-                    </Text>
-                  </View>
-                  <View className="flex-1">
-                    <Text
-                      className="text-sm font-bold"
-                      style={{ color: theme.text }}
-                    >
-                      {item.surahName}
-                    </Text>
-                    <Text
-                      className="text-xs mt-0.5"
-                      numberOfLines={1}
-                      style={{ color: theme.textSecondary }}
-                    >
-                      {item.translation}
-                    </Text>
-                  </View>
-                  <MaterialCommunityIcons
-                    name="chevron-right"
-                    size={18}
-                    color={theme.textSecondary}
+              <View className="gap-2">
+                {history.slice(0, 5).map((item, idx) => (
+                  <InfoRow
+                    key={`${item.id}-${idx}`}
+                    theme={theme}
+                    badge={`${item.surahNumber}:${item.ayahNumber}`}
+                    title={item.surahName}
+                    subtitle={item.translation}
+                    onPress={() =>
+                      router.push({
+                        pathname: "/ayah",
+                        params: {
+                          surah: item.surahNumber,
+                          ayah: item.ayahNumber,
+                        },
+                      })
+                    }
                   />
-                </TouchableOpacity>
-              ))}
+                ))}
+              </View>
             </View>
           )}
 

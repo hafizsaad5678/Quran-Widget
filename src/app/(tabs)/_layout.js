@@ -75,16 +75,6 @@ export default function TabsLayout() {
                     ),
                 }}
             />
-            <Tabs.Screen
-                name="settings"
-                options={{
-                    tabBarIcon: ({ color, focused }) => (
-                        <View className={`w-12 h-12 rounded-full items-center justify-center ${focused ? "bg-sanctuary-accent/10" : ""}`}>
-                            <MaterialCommunityIcons name={focused ? "account-settings" : "account-settings-outline"} color={color} size={24} />
-                        </View>
-                    ),
-                }}
-            />
         </Tabs>
     );
 }

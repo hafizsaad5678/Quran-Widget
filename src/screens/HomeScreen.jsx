@@ -1,3 +1,6 @@
+import NavCard from "../components/ui/NavCard";
+import InfoRow from "../components/ui/InfoRow";
+import { STREAK_ENABLED } from "../constants/features";
 import {
   ScheherazadeNew_400Regular,
   useFonts,
@@ -174,7 +177,7 @@ export default function HomeScreen() {
         title="Connect with Quran"
         onLeftPress={() => router.push("/about")}
         leftIcon="menu"
-        rightIcon="account"
+        rightIcon="cog-outline"
         onRightPress={() => router.push("/settings")}
       />
 
@@ -291,85 +294,46 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Stats Row */}
+        {/* Quick links */}
         <View className="flex-row gap-3 mt-4">
-          <TouchableOpacity
-            className="flex-1 rounded-[24px] p-6 border"
-            style={{
-              backgroundColor: theme.cardBackground,
-              borderColor: theme.border,
-            }}
+          <NavCard
+            theme={theme}
+            icon="book-open-variant"
+            label="Daily Verse"
+            subtitle={
+              STREAK_ENABLED ? `${streak.current} Day Streak` : "Today's Ayah"
+            }
             onPress={() => router.push("/ayah")}
-          >
-            <MaterialCommunityIcons
-              name="book-open-variant"
-              size={24}
-              color={theme.accent}
-            />
-            <Text
-              style={{
-                marginTop: 16,
-                fontSize: 10,
-                fontWeight: "700",
-                letterSpacing: 1,
-                color: theme.accent,
-                opacity: 0.75,
-              }}
-            >
-              Daily Verse
-            </Text>
-            <Text
-              style={{
-                marginTop: 4,
-                fontSize: 18,
-                fontWeight: "700",
-                color: theme.text,
-              }}
-            >
-              {streak.current} Day Streak
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            className="flex-1 rounded-[24px] p-6 border"
-            style={{
-              backgroundColor: theme.cardBackground,
-              borderColor: theme.border,
-            }}
+          />
+          <NavCard
+            theme={theme}
+            icon="bookmark-multiple-outline"
+            label="Saved"
+            subtitle={`${collections.length} Collections`}
             onPress={() => router.push("/collections")}
-          >
-            <MaterialCommunityIcons
-              name="bookmark-multiple-outline"
-              size={24}
-              color={theme.accent}
-            />
-            <Text
-              style={{
-                marginTop: 16,
-                fontSize: 10,
-                fontWeight: "700",
-                letterSpacing: 1,
-                color: theme.accent,
-                opacity: 0.75,
-              }}
-            >
-              Collections
-            </Text>
-            <Text
-              style={{
-                marginTop: 4,
-                fontSize: 18,
-                fontWeight: "700",
-                color: theme.text,
-              }}
-            >
-              {collections.length} Saved
-            </Text>
-          </TouchableOpacity>
+          />
+        </View>
+
+        <View className="flex-row gap-3 mt-3">
+          <NavCard
+            theme={theme}
+            icon="book-open-page-variant-outline"
+            label="Full Quran"
+            subtitle="114 Surahs"
+            onPress={() => router.push("/quran-offline")}
+          />
+          <NavCard
+            theme={theme}
+            icon="view-grid-plus-outline"
+            label="Widget"
+            subtitle="Customize"
+            onPress={() => router.push("/widget-settings")}
+          />
         </View>
 
         {/* Journey Progress */}
-        <View
+          {STREAK_ENABLED && (
+<View
           className="mt-4 rounded-[24px] border p-6"
           style={{
             borderColor: theme.border,
@@ -617,15 +581,16 @@ export default function HomeScreen() {
             {streak.current || 0}/7 DAYS THIS WEEK
           </Text>
         </View>
+          )}
 
-        {/* Recently Read */}
+          {/* Recently Read */}
         <View className="mt-6 mb-2 px-2 flex-row items-center justify-between">
           <Text
             style={{
               fontSize: 13,
               fontWeight: "700",
               letterSpacing: 1,
-              color: theme.text,
+              color: theme.accent,
             }}
           >
             Recently Read
@@ -647,50 +612,19 @@ export default function HomeScreen() {
         <View className="gap-2">
           {history.length ? (
             history.map((item, idx) => (
-              <TouchableOpacity
+              <InfoRow
                 key={`${item.id}-${idx}`}
+                theme={theme}
+                icon="book-open-variant"
+                title={item.surahName}
+                subtitle={`Ayah ${item.ayahNumber}`}
                 onPress={() =>
                   router.push({
                     pathname: "/ayah",
                     params: { surah: item.surahNumber, ayah: item.ayahNumber },
                   })
                 }
-                className="flex-row items-center rounded-2xl border p-4"
-                style={{
-                  borderColor: theme.border,
-                  backgroundColor: theme.cardBackground,
-                }}
-              >
-                <View
-                  className="w-10 h-10 rounded-full items-center justify-center"
-                  style={{ backgroundColor: theme.softAccent }}
-                >
-                  <MaterialCommunityIcons
-                    name="book-open-variant"
-                    size={18}
-                    color={theme.accent}
-                  />
-                </View>
-                <View className="ml-4 flex-1">
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: "700",
-                      color: theme.text,
-                    }}
-                  >
-                    {item.surahName}
-                  </Text>
-                  <Text style={{ fontSize: 12, color: theme.textSecondary }}>
-                    Ayah {item.ayahNumber}
-                  </Text>
-                </View>
-                <MaterialCommunityIcons
-                  name="chevron-right"
-                  size={20}
-                  color={theme.textSecondary}
-                />
-              </TouchableOpacity>
+              />
             ))
           ) : (
             <Text
@@ -706,95 +640,6 @@ export default function HomeScreen() {
           )}
         </View>
 
-        {/* Quran Reader entry */}
-        <TouchableOpacity
-          className="mt-4 overflow-hidden rounded-[28px] border p-5"
-          style={{
-            borderColor: theme.border,
-            backgroundColor: theme.cardBackground,
-          }}
-          onPress={() => router.push("/quran-offline")}
-        >
-          <View className="flex-row items-center justify-between">
-            <View>
-              <Text
-                style={{
-                  fontSize: 12,
-                  fontWeight: "700",
-                  letterSpacing: 1.5,
-                  color: theme.accent,
-                  opacity: 0.75,
-                }}
-              >
-                Full Quran
-              </Text>
-              <Text
-                style={{
-                  marginTop: 4,
-                  fontSize: 13,
-                  color: theme.textSecondary,
-                }}
-              >
-                Read any of the 114 Surahs offline
-              </Text>
-            </View>
-            <View
-              className="h-12 w-12 items-center justify-center rounded-2xl"
-              style={{ backgroundColor: theme.softAccent }}
-            >
-              <MaterialCommunityIcons
-                name="book-open-page-variant-outline"
-                size={24}
-                color={theme.accent}
-              />
-            </View>
-          </View>
-        </TouchableOpacity>
-
-        {/* Widget Settings */}
-        <TouchableOpacity
-          className="mt-4 mb-3 overflow-hidden rounded-[28px] border p-5"
-          style={{
-            borderColor: theme.border,
-            backgroundColor: theme.cardBackground,
-          }}
-          onPress={() => router.push("/widget-settings")}
-        >
-          <View className="flex-row items-center justify-between">
-            <View>
-              <Text
-                style={{
-                  fontSize: 12,
-                  fontWeight: "700",
-                  letterSpacing: 1.5,
-                  color: theme.accent,
-                  opacity: 0.75,
-                }}
-              >
-                Widget Settings
-              </Text>
-              <Text
-                style={{
-                  marginTop: 4,
-                  fontSize: 13,
-                  color: theme.textSecondary,
-                }}
-              >
-                Read any of the 114 Surahs offline
-              </Text>
-            </View>
-            <View
-              className="h-12 w-12 items-center justify-center rounded-2xl"
-              style={{ backgroundColor: theme.softAccent }}
-            >
-              <MaterialCommunityIcons
-                name="view-grid-plus-outline"
-                size={24}
-                color={theme.accent}
-              />
-            </View>
-          </View>
-        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );

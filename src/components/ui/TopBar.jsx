@@ -2,7 +2,6 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { usePathname, useRouter } from "expo-router";
 import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
-import { useAuth } from "../../context/AuthContext";
 import { useSession } from "../../context/SessionContext";
 import { useTheme } from "../../context/ThemeContext";
 import { useToast } from "../../context/ToastContext";
@@ -15,7 +14,6 @@ export default function TopBar({
   onRightPress,
 }) {
   const { theme } = useTheme();
-  const { user, displayName } = useAuth() ?? {};
   const { session, formatted, pauseSession, resumeSession, abandonSession } = useSession() ?? {};
   const { show } = useToast() ?? {};
   const router = useRouter();
@@ -29,12 +27,8 @@ export default function TopBar({
     if (pathname !== "/settings") router.push("/settings");
   });
 
-  const initial = displayName?.[0]?.toUpperCase()
-    ?? user?.email?.[0]?.toUpperCase()
-    ?? null;
-
   const handleStop = () => {
-    show?.({ type: "warning", title: "Session Ended Early", message: "Streak not counted — complete the full session to earn your streak." });
+    show?.({ type: "warning", title: "Session Ended Early", message: "Session ended early." });
     abandonSession?.();
   };
 
@@ -67,17 +61,11 @@ export default function TopBar({
           className="h-11 w-11 items-center justify-center rounded-full border"
           style={{ borderColor: theme.border, backgroundColor: theme.cardBackground }}
         >
-          {initial && !rightIcon ? (
-            <Text style={{ fontSize: 16, fontWeight: "700", color: theme.accent }}>
-              {initial}
-            </Text>
-          ) : (
-            <MaterialCommunityIcons
-              name={rightIcon ?? "account-circle-outline"}
-              size={22}
-              color={theme.accent}
-            />
-          )}
+          <MaterialCommunityIcons
+            name={rightIcon ?? "cog-outline"}
+            size={22}
+            color={theme.accent}
+          />
         </TouchableOpacity>
       </View>
 

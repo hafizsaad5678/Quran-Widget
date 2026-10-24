@@ -37,7 +37,7 @@ export default function SessionBanner() {
     show({
       type: "success",
       title: "Session Complete 🌙",
-      message: `MashaAllah! ${Math.round(session.durationSeconds / 60)} min session done. Streak updated.`,
+      message: `MashaAllah! ${Math.round(session.durationSeconds / 60)} min session done.`,
       duration: 5000,
     });
     clearSession();
@@ -50,7 +50,7 @@ export default function SessionBanner() {
       type: "warning",
       title: "Session Ended Early",
       message:
-        "Streak not counted — complete the full session to earn your streak.",
+        "Session ended early.",
       duration: 4000,
     });
     abandonSession();
