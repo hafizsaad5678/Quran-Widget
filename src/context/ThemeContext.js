@@ -12,9 +12,10 @@ export const lightTheme = {
   text: "#000000",
   textSecondary: "rgba(0, 0, 0, 0.5)",
   textDisabled: "rgba(0, 0, 0, 0.2)",
-  accent: "#D4AF37", // Single elegant Gold
+  accent: "#8A6A12", // Deep gold for readability on light backgrounds
+  onAccent: "#FFFFFF", // text/icons placed on top of the accent color
   secondary: "rgba(0, 0, 0, 0.05)",
-  softAccent: "rgba(212, 175, 55, 0.15)",
+  softAccent: "rgba(138, 106, 18, 0.15)",
   border: "rgba(0, 0, 0, 0.05)", // Almost invisible
   ultraLight: "rgba(255, 255, 255, 0.8)",
   error: "#FF3B30",
@@ -33,9 +34,10 @@ export const darkTheme = {
   text: "#FFFFFF",
   textSecondary: "rgba(255, 255, 255, 0.5)",
   textDisabled: "rgba(255, 255, 255, 0.2)",
-  accent: "#D4AF37", // Single elegant Gold
+  accent: "#E6CA72", // Single elegant Gold
+  onAccent: "#1A1405", // dark text on the light gold (readable)
   secondary: "rgba(255, 255, 255, 0.08)",
-  softAccent: "rgba(212, 175, 55, 0.15)",
+  softAccent: "rgba(230, 202, 114, 0.15)",
   border: "rgba(255, 255, 255, 0.1)", // Glass border effect
   ultraLight: "rgba(255, 255, 255, 0.02)",
   error: "#FF453A",

@@ -86,7 +86,7 @@ export default function ReadingSessionScreen() {
             </TouchableOpacity>
             <Text
               className="text-lg font-bold flex-1"
-              style={{ color: theme.text }}
+              style={{ color: theme.accent }}
             >
               Choose Starting Surah
             </Text>
@@ -146,7 +146,7 @@ export default function ReadingSessionScreen() {
                     style={{
                       fontSize: 14,
                       fontWeight: "700",
-                      color: theme.text,
+                      color: theme.accent,
                     }}
                   >
                     {item.name}
@@ -187,7 +187,7 @@ export default function ReadingSessionScreen() {
               color={theme.accent}
             />
           </TouchableOpacity>
-          <Text className="text-xl font-bold" style={{ color: theme.text }}>
+          <Text className="text-xl font-bold" style={{ color: theme.accent }}>
             Morning Calm
           </Text>
         </View>
@@ -206,7 +206,7 @@ export default function ReadingSessionScreen() {
             </View>
             <Text
               className="text-2xl font-serif font-bold text-center"
-              style={{ color: theme.text }}
+              style={{ color: theme.accent }}
             >
               Set Your Reading Time
             </Text>
@@ -214,7 +214,7 @@ export default function ReadingSessionScreen() {
               className="text-sm text-center mt-2 leading-6"
               style={{ color: theme.textSecondary }}
             >
-              Your streak will be marked when the session completes.
+              Stay focused until the timer completes.
             </Text>
           </View>
 
@@ -239,7 +239,7 @@ export default function ReadingSessionScreen() {
                 >
                   <Text
                     className="font-bold text-sm"
-                    style={{ color: active ? "#fff" : theme.text }}
+                    style={{ color: active ? theme.onAccent : theme.text }}
                   >
                     {p.label}
                   </Text>
@@ -261,7 +261,7 @@ export default function ReadingSessionScreen() {
               }}
             >
               {useCustom && (
-                <MaterialCommunityIcons name="check" size={12} color="#fff" />
+                <MaterialCommunityIcons name="check" size={12} color={theme.onAccent} />
               )}
             </View>
             <Text className="text-sm" style={{ color: theme.textSecondary }}>
@@ -295,7 +295,7 @@ export default function ReadingSessionScreen() {
             className="rounded-2xl py-4 items-center mt-2"
             style={{ backgroundColor: theme.accent }}
           >
-            <Text className="text-base font-bold text-white">
+            <Text className="text-base font-bold" style={{ color: theme.onAccent }}>
               Next — Choose Surah
             </Text>
           </TouchableOpacity>

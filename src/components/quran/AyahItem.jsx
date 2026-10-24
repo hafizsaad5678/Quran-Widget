@@ -70,7 +70,7 @@ const AyahItem = React.memo(
                 style={{
                   fontSize: 10,
                   fontWeight: "700",
-                  color: isSelected ? "#fff" : theme.accent,
+                  color: isSelected ? theme.onAccent : theme.accent,
                 }}
               >
                 {ayah.ayahNumber}

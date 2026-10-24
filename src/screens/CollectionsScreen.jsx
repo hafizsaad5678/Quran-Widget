@@ -63,11 +63,11 @@ export default function CollectionsScreen() {
                 <MaterialCommunityIcons
                   name={c.icon || "bookmark-outline"}
                   size={15}
-                  color={isActive ? "#fff" : theme.accent}
+                  color={isActive ? theme.onAccent : theme.accent}
                 />
                 <Text
                   className="ml-2 text-xs font-bold"
-                  style={{ color: isActive ? "#fff" : theme.text }}
+                  style={{ color: isActive ? theme.onAccent : theme.text }}
                 >
                   {c.name}
                 </Text>
@@ -75,7 +75,7 @@ export default function CollectionsScreen() {
                   className="ml-2 w-5 h-5 rounded-full items-center justify-center"
                   style={{ backgroundColor: isActive ? "rgba(255,255,255,0.25)" : theme.softAccent }}
                 >
-                  <Text className="text-[9px] font-bold" style={{ color: isActive ? "#fff" : theme.accent }}>
+                  <Text className="text-[9px] font-bold" style={{ color: isActive ? theme.onAccent : theme.accent }}>
                     {c.ayahIds.length}
                   </Text>
                 </View>
@@ -89,7 +89,7 @@ export default function CollectionsScreen() {
       {activeCollection && (
         <View className="px-5 mt-5 mb-2 flex-row items-center justify-between">
           <View>
-            <Text className="text-lg font-serif font-bold" style={{ color: theme.text }}>
+            <Text className="text-lg font-serif font-bold" style={{ color: theme.accent }}>
               {activeCollection.name}
             </Text>
             <Text className="text-xs mt-0.5" style={{ color: theme.textSecondary }}>
@@ -138,7 +138,7 @@ export default function CollectionsScreen() {
               color={theme.textSecondary}
               style={{ opacity: 0.35 }}
             />
-            <Text className="mt-4 text-base font-bold text-center" style={{ color: theme.text }}>
+            <Text className="mt-4 text-base font-bold text-center" style={{ color: theme.accent }}>
               This collection is empty
             </Text>
             <Text className="mt-2 text-sm text-center leading-6" style={{ color: theme.textSecondary }}>
@@ -149,7 +149,7 @@ export default function CollectionsScreen() {
               className="mt-6 rounded-full px-6 py-3"
               style={{ backgroundColor: theme.accent }}
             >
-              <Text className="text-xs font-bold text-white uppercase tracking-wider">
+              <Text className="text-xs font-bold uppercase tracking-wider" style={{ color: theme.onAccent }}>
                 Browse Ayah Library
               </Text>
             </TouchableOpacity>
@@ -170,7 +170,7 @@ export default function CollectionsScreen() {
               </Text>
             </View>
             <View className="flex-1">
-              <Text className="text-sm font-bold" numberOfLines={1} style={{ color: theme.text }}>
+              <Text className="text-sm font-bold" numberOfLines={1} style={{ color: theme.accent }}>
                 {item.surahName}
               </Text>
               <Text className="text-xs mt-0.5 italic" numberOfLines={1} style={{ color: theme.textSecondary }}>

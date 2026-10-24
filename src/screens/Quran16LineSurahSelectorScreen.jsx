@@ -35,7 +35,7 @@ export default function Quran16LineSurahSelectorScreen() {
           />
         </TouchableOpacity>
         <View className="flex-1">
-          <Text style={{ color: theme.text, fontSize: 17, fontWeight: "700" }}>
+          <Text style={{ color: theme.accent, fontSize: 17, fontWeight: "700" }}>
             16 Line Quran Reading
           </Text>
           <Text style={{ color: theme.textSecondary, fontSize: 12 }}>
@@ -79,7 +79,7 @@ export default function Quran16LineSurahSelectorScreen() {
             </View>
             <View className="flex-1">
               <Text
-                style={{ color: theme.text, fontSize: 14, fontWeight: "700" }}
+                style={{ color: theme.accent, fontSize: 14, fontWeight: "700" }}
               >
                 {item.nameArabic}
               </Text>

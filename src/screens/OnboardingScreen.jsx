@@ -50,6 +50,7 @@ const FEATURES = [
 ];
 
 const FeatureSlide = ({ item, theme }) => {
+  const [fontLoaded] = useFonts({ ScheherazadeNew_400Regular });
   return (
     <View style={{ width }} className="px-8 items-center justify-center">
       <View
@@ -149,7 +150,6 @@ const FeatureSlide = ({ item, theme }) => {
 };
 
 export default function OnboardingScreen() {
-  const [fontLoaded] = useFonts({ ScheherazadeNew_400Regular });
   const router = useRouter();
   const { theme } = useTheme();
   const [activeIndex, setActiveIndex] = useState(0);
@@ -247,7 +247,7 @@ export default function OnboardingScreen() {
               className="rounded-2xl py-4 items-center"
               style={{ backgroundColor: theme.accent }}
             >
-              <Text className="text-base font-bold" style={{ color: "#fff" }}>
+              <Text className="text-base font-bold" style={{ color: theme.onAccent }}>
                 Get Started
               </Text>
             </TouchableOpacity>
@@ -275,7 +275,7 @@ export default function OnboardingScreen() {
             className="rounded-2xl py-4 items-center"
             style={{ backgroundColor: theme.accent }}
           >
-            <Text className="text-base font-bold text-white">Next</Text>
+            <Text className="text-base font-bold" style={{ color: theme.onAccent }}>Next</Text>
           </TouchableOpacity>
         )}
 
