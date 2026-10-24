@@ -27,7 +27,7 @@ const GuidanceCard = ({ item, onPress, theme }) => (
       <MaterialCommunityIcons name={item.icon} size={24} color={theme.accent} />
     </View>
     <View className="flex-1">
-      <Text className="text-base font-bold" style={{ color: theme.text }}>
+      <Text className="text-base font-bold" style={{ color: theme.accent }}>
         {item.title}
       </Text>
       <Text
@@ -73,55 +73,11 @@ export default function SituationSelectorScreen() {
             </Text>
             <Text
               className="text-2xl font-serif font-bold leading-tight"
-              style={{ color: theme.text }}
+              style={{ color: theme.accent }}
             >
               Choose your situation and receive a focused set of ayahs and
               reflections.
             </Text>
-          </View>
-
-          {/* Quick nav */}
-          <View className="flex-row gap-3 mb-6">
-            <TouchableOpacity
-              className="flex-1 rounded-2xl border p-4"
-              style={{
-                backgroundColor: theme.cardBackground,
-                borderColor: theme.border,
-              }}
-              onPress={() => router.push("/stats")}
-            >
-              <MaterialCommunityIcons
-                name="chart-box-outline"
-                size={20}
-                color={theme.accent}
-              />
-              <Text
-                className="mt-2 text-xs font-bold uppercase tracking-[1px]"
-                style={{ color: theme.accent }}
-              >
-                My Stats
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              className="flex-1 rounded-2xl border p-4"
-              style={{
-                backgroundColor: theme.cardBackground,
-                borderColor: theme.border,
-              }}
-              onPress={() => router.push("/collections")}
-            >
-              <MaterialCommunityIcons
-                name="bookmark-multiple-outline"
-                size={20}
-                color={theme.accent}
-              />
-              <Text
-                className="mt-2 text-xs font-bold uppercase tracking-[1px]"
-                style={{ color: theme.accent }}
-              >
-                Collections
-              </Text>
-            </TouchableOpacity>
           </View>
 
           {/* Featured journey — Morning Calm */}
@@ -140,7 +96,7 @@ export default function SituationSelectorScreen() {
             </Text>
             <Text
               className="text-xl font-serif font-bold mb-2"
-              style={{ color: theme.text }}
+              style={{ color: theme.accent }}
             >
               Morning Calm
             </Text>
@@ -162,7 +118,7 @@ export default function SituationSelectorScreen() {
                     className="w-5 h-5 rounded-full items-center justify-center"
                     style={{ backgroundColor: theme.accent }}
                   >
-                    <Text className="text-[9px] font-bold text-white">
+                    <Text className="text-[9px] font-bold" style={{ color: theme.onAccent }}>
                       {i + 1}
                     </Text>
                   </View>
@@ -180,7 +136,7 @@ export default function SituationSelectorScreen() {
               style={{ backgroundColor: theme.accent }}
               onPress={() => router.push("/reading-session")}
             >
-              <Text className="text-[10px] font-bold uppercase tracking-[1.8px] text-white">
+              <Text className="text-[10px] font-bold uppercase tracking-[1.8px]" style={{ color: theme.onAccent }}>
                 Start Now
               </Text>
             </TouchableOpacity>
@@ -195,43 +151,6 @@ export default function SituationSelectorScreen() {
               onPress={() => router.push(`/situation/${p.key}`)}
             />
           ))}
-
-          {/* Motivation ayah */}
-          <View
-            className="mb-6 rounded-[28px] border p-6"
-            style={{
-              backgroundColor: theme.cardBackground,
-              borderColor: theme.border,
-            }}
-          >
-            <Text
-              className="text-[10px] font-bold uppercase tracking-[2px] mb-3"
-              style={{ color: theme.textSecondary }}
-            >
-              Verse of Motivation
-            </Text>
-            <Text
-              className="text-base font-serif italic leading-7 mb-2"
-              style={{ color: theme.text }}
-            >
-              &quot;Verily, with hardship comes ease.&quot;
-            </Text>
-            <Text className="text-xs" style={{ color: theme.textSecondary }}>
-              Surah Ash-Sharh 94:6
-            </Text>
-            <TouchableOpacity
-              className="mt-4 self-start rounded-full px-4 py-2 border"
-              style={{ borderColor: theme.border }}
-              onPress={() => router.push("/situation/motivation")}
-            >
-              <Text
-                className="text-[10px] font-bold uppercase tracking-wider"
-                style={{ color: theme.accent }}
-              >
-                Explore Motivation →
-              </Text>
-            </TouchableOpacity>
-          </View>
         </ScrollView>
       </SafeAreaView>
     </SwipeBackContainer>

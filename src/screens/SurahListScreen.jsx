@@ -32,7 +32,7 @@ const SurahRow = React.memo(({ surah, onPress, theme }) => (
 
     {/* Names */}
     <View className="flex-1">
-      <Text style={{ fontSize: 15, fontWeight: "700", color: theme.text }}>
+      <Text style={{ fontSize: 15, fontWeight: "700", color: theme.accent }}>
         {surah.name}
       </Text>
       <Text style={{ fontSize: 12, color: theme.textSecondary, marginTop: 1 }}>
@@ -98,7 +98,7 @@ export default function SurahListScreen() {
           </TouchableOpacity>
           <Text
             className="text-xl font-bold flex-1"
-            style={{ color: theme.text }}
+            style={{ color: theme.accent }}
           >
             Quran
           </Text>
@@ -160,7 +160,7 @@ export default function SurahListScreen() {
             </View>
             <View className="flex-1">
               <Text
-                style={{ fontSize: 12, fontWeight: "700", color: theme.text }}
+                style={{ fontSize: 12, fontWeight: "700", color: theme.accent }}
               >
                 16 Line Quran Reading
               </Text>

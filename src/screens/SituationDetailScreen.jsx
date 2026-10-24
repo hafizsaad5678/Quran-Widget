@@ -3,9 +3,9 @@ import {
   useFonts,
 } from "@expo-google-fonts/scheherazade-new";
 import { Audio } from "../services/audioCompat";
-import * as Network from "expo-network";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Modal, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AyahDisplay } from "../components/AyahDisplay";
@@ -15,17 +15,15 @@ import TopBar from "../components/ui/TopBar";
 import { findSituation } from "../constants/situations";
 import { useTheme } from "../context/ThemeContext";
 import { useAyatLibrary } from "../hooks/useAyatLibrary";
+import {
+  OFFLINE_LANGUAGES,
+  ayahTranslation,
+  useTranslationData,
+} from "../constants/offlineTranslations";
+import { resolveAudioSource } from "../services/audioStore";
 import { saveAyahToHistory } from "../services/userService";
 
-const API_BASE = "https://api.alquran.cloud/v1/ayah";
-const LANGUAGE_OPTIONS = [
-  { key: "offline-en", label: "English (Offline)", edition: null },
-  { key: "ur.jalandhry", label: "Urdu", edition: "ur.jalandhry" },
-  { key: "hi.hindi", label: "Hindi", edition: "hi.hindi" },
-  { key: "it.piccardo", label: "Italian", edition: "it.piccardo" },
-  { key: "de.bubenheim", label: "German", edition: "de.bubenheim" },
-  { key: "fr.hamidullah", label: "French", edition: "fr.hamidullah" },
-];
+const LANGUAGE_OPTIONS = OFFLINE_LANGUAGES;
 
 export default function SituationDetailScreen() {
   const router = useRouter();
@@ -35,17 +33,12 @@ export default function SituationDetailScreen() {
   const { ayat } = useAyatLibrary();
 
   const [selectedId, setSelectedId] = useState(null);
-  const [onlineTranslations, setOnlineTranslations] = useState({});
-  const [onlineAudioUrls, setOnlineAudioUrls] = useState({});
-  const [loadingOnline, setLoadingOnline] = useState(false);
-  const [loadingTranslation, setLoadingTranslation] = useState(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [audioAyahId, setAudioAyahId] = useState(null);
   const [sound, setSound] = useState(null);
   const [selectedLanguage, setSelectedLanguage] = useState("offline-en");
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [fontsLoaded] = useFonts({ ScheherazadeNew_400Regular });
-  const translationCacheRef = useRef({});
 
   const filteredAyat = useMemo(() => {
     if (!situation) return [];
@@ -70,113 +63,30 @@ export default function SituationDetailScreen() {
     void saveAyahToHistory(currentAyah);
   }, [currentAyah]);
 
-  useEffect(() => {
-    let active = true;
-
-    const fetchAudioData = async () => {
-      if (!filteredAyat.length) return;
-      setLoadingOnline(true);
-
-      const nextAudio = {};
-
-      await Promise.all(
-        filteredAyat.map(async (ayah) => {
-          try {
-            const audioRes = await fetch(`${API_BASE}/${ayah.id}/ar.alafasy`);
-
-            if (audioRes.ok) {
-              const audioPayload = await audioRes.json();
-              nextAudio[ayah.id] = audioPayload?.data?.audio || null;
-            }
-          } catch (_error) {
-            // Keep offline fallback silently.
-          }
-        }),
-      );
-
-      if (!active) return;
-      setOnlineAudioUrls(nextAudio);
-      setLoadingOnline(false);
-    };
-
-    void fetchAudioData();
-    return () => {
-      active = false;
-    };
+  // Audio streams directly from the CDN (needs internet); no API round trip.
+  const onlineAudioUrls = useMemo(() => {
+    const urls = {};
+    filteredAyat.forEach((ayah) => {
+      if (ayah?.globalAyahNumber) {
+        urls[ayah.id] = resolveAudioSource(ayah.globalAyahNumber);
+      }
+    });
+    return urls;
   }, [filteredAyat]);
 
-  useEffect(() => {
-    let active = true;
-
-    const loadTranslation = async () => {
-      const option = LANGUAGE_OPTIONS.find(
-        (item) => item.key === selectedLanguage,
-      );
-      if (!option?.edition) {
-        if (active) {
-          setOnlineTranslations({});
-          setLoadingTranslation(false);
-        }
-        return;
-      }
-
-      const cacheKey = `${String(key)}:${option.edition}`;
-      const cached = translationCacheRef.current[cacheKey];
-      if (cached) {
-        if (active) {
-          setOnlineTranslations(cached);
-          setLoadingTranslation(false);
-        }
-        return;
-      }
-
-      try {
-        if (active) setLoadingTranslation(true);
-
-        const net = await Network.getNetworkStateAsync();
-        const isOnline =
-          net.isConnected !== false && net.isInternetReachable !== false;
-        if (!isOnline) {
-          throw new Error("No internet connection.");
-        }
-
-        const nextTranslations = {};
-        await Promise.all(
-          filteredAyat.map(async (ayah) => {
-            try {
-              const translationRes = await fetch(
-                `${API_BASE}/${ayah.id}/${option.edition}`,
-              );
-              if (!translationRes.ok) return;
-              const translationPayload = await translationRes.json();
-              nextTranslations[ayah.id] =
-                translationPayload?.data?.text || ayah.translation;
-            } catch (_error) {
-              // Keep offline translation as fallback.
-            }
-          }),
-        );
-
-        translationCacheRef.current[cacheKey] = nextTranslations;
-        if (active) {
-          setOnlineTranslations(nextTranslations);
-        }
-      } catch (_error) {
-        if (active) {
-          setOnlineTranslations({});
-          setSelectedLanguage("offline-en");
-        }
-      } finally {
-        if (active) setLoadingTranslation(false);
-      }
-    };
-
-    void loadTranslation();
-
-    return () => {
-      active = false;
-    };
-  }, [filteredAyat, key, selectedLanguage]);
+  // Translations ship inside the app (assets), loaded on demand: works offline.
+  const { data: translationData, loading: translationLoading } =
+    useTranslationData(selectedLanguage);
+  const onlineTranslations = useMemo(() => {
+    if (!translationData) return {};
+    const next = {};
+    filteredAyat.forEach((ayah) => {
+      const [surah, num] = String(ayah.id).split(":");
+      next[ayah.id] =
+        ayahTranslation(translationData, surah, num) || ayah.translation;
+    });
+    return next;
+  }, [filteredAyat, translationData]);
 
   useEffect(() => {
     return () => {
@@ -200,7 +110,7 @@ export default function SituationDetailScreen() {
   const selectedLanguageLabel = useMemo(() => {
     return (
       LANGUAGE_OPTIONS.find((opt) => opt.key === selectedLanguage)?.label ||
-      "English (Offline)"
+      "English"
     );
   }, [selectedLanguage]);
 
@@ -322,75 +232,98 @@ export default function SituationDetailScreen() {
               fontLoaded={fontsLoaded}
             />
 
-            <View className="mt-4 gap-3">
+            <View className="mt-5">
               <View className="flex-row items-center justify-between">
-                <Text style={{ fontSize: 11, color: theme.textSecondary }}>
-                  {loadingOnline
-                    ? "Loading translation/audio from API..."
-                    : "Arabic: Offline  |  Translation + Audio: API"}
+                <Text
+                  style={{
+                    fontSize: 11,
+                    fontWeight: "700",
+                    letterSpacing: 1,
+                    color: theme.textSecondary,
+                  }}
+                >
+                  {currentAyah
+                    ? `AYAH ${currentAyah.surahNumber}:${currentAyah.ayahNumber}`
+                    : ""}
                 </Text>
-              </View>
 
-              <View className="flex-row items-center gap-2">
                 <TouchableOpacity
                   onPress={() => setShowLanguageModal(true)}
-                  className="rounded-full px-4 py-2 border"
+                  className="flex-row items-center rounded-full px-3 py-2 border"
                   style={{
                     borderColor: theme.border,
                     backgroundColor: theme.cardBackground,
                   }}
                 >
+                  <MaterialCommunityIcons
+                    name="translate"
+                    size={14}
+                    color={theme.accent}
+                  />
                   <Text
                     style={{
+                      marginLeft: 6,
                       fontSize: 11,
                       fontWeight: "700",
-                      color: theme.text,
+                      color: theme.accent,
                     }}
                   >
-                    {loadingTranslation ? "Loading..." : selectedLanguageLabel}
+                    {translationLoading ? "Loading..." : selectedLanguageLabel}
                   </Text>
                 </TouchableOpacity>
+              </View>
 
+              <View className="mt-3 flex-row items-center gap-3">
                 <TouchableOpacity
                   onPress={togglePlayAudio}
                   disabled={!onlineAudioUrls[currentAyah?.id]}
-                  className="rounded-full px-4 py-2"
+                  className="flex-1 flex-row items-center justify-center rounded-full py-3"
                   style={{
                     backgroundColor: onlineAudioUrls[currentAyah?.id]
                       ? theme.accent
                       : theme.border,
                   }}
                 >
+                  <MaterialCommunityIcons
+                    name={
+                      isPlayingAudio && audioAyahId === currentAyah?.id
+                        ? "pause"
+                        : "play"
+                    }
+                    size={18}
+                    color={theme.onAccent}
+                  />
                   <Text
-                    style={{ color: "#fff", fontSize: 11, fontWeight: "700" }}
+                    style={{
+                      marginLeft: 6,
+                      color: theme.onAccent,
+                      fontSize: 12,
+                      fontWeight: "700",
+                    }}
                   >
                     {isPlayingAudio && audioAyahId === currentAyah?.id
                       ? "Pause"
-                      : "Play"}
+                      : "Listen"}
                   </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   onPress={stopAudio}
                   disabled={!sound}
-                  className="rounded-full px-4 py-2"
+                  className="h-11 w-11 items-center justify-center rounded-full border"
                   style={{
-                    backgroundColor: sound ? "#b91c1c" : theme.border,
+                    borderColor: sound ? theme.accent : theme.border,
+                    backgroundColor: theme.cardBackground,
+                    opacity: sound ? 1 : 0.4,
                   }}
                 >
-                  <Text
-                    style={{ color: "#fff", fontSize: 11, fontWeight: "700" }}
-                  >
-                    Stop
-                  </Text>
+                  <MaterialCommunityIcons
+                    name="stop"
+                    size={20}
+                    color={theme.accent}
+                  />
                 </TouchableOpacity>
               </View>
-
-              <Text style={{ fontSize: 11, color: theme.textSecondary }}>
-                {currentAyah
-                  ? `Ayah ${currentAyah.surahNumber}:${currentAyah.ayahNumber}`
-                  : ""}
-              </Text>
             </View>
           </GlassCard>
 
@@ -414,7 +347,7 @@ export default function SituationDetailScreen() {
                     style={{
                       fontSize: 12,
                       fontWeight: "700",
-                      color: active ? "#fff" : theme.accent,
+                      color: active ? theme.onAccent : theme.accent,
                     }}
                   >
                     {item.surahNumber}:{item.ayahNumber}

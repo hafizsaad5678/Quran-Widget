@@ -184,7 +184,7 @@ function AyahRow({ item, isSelected, isFav, onPress, theme, fontLoaded }) {
                   style={{
                     fontSize: 9,
                     fontWeight: "700",
-                    color: isSelected ? "#fff" : theme.accent,
+                    color: isSelected ? theme.onAccent : theme.accent,
                   }}
                 >
                   {item.surahNumber}:{item.ayahNumber}
@@ -296,62 +296,7 @@ export default function AyahScreen() {
           contentContainerStyle={{ paddingBottom: 120 }}
           ListHeaderComponent={() => (
             <View>
-              {/* Quick action cards */}
-              <View className="flex-row gap-3 px-4 mt-3 mb-3">
-                <TouchableOpacity
-                  onPress={() => router.push("/quran-offline")}
-                  className="flex-1 rounded-[22px] p-4 border"
-                  style={{
-                    backgroundColor: theme.cardBackground,
-                    borderColor: theme.border,
-                  }}
-                >
-                  <MaterialCommunityIcons
-                    name="book-open-page-variant-outline"
-                    size={22}
-                    color={theme.accent}
-                  />
-                  <Text
-                    className="mt-2 text-xs font-bold"
-                    style={{ color: theme.text }}
-                  >
-                    Full Quran
-                  </Text>
-                  <Text
-                    className="text-[10px] mt-0.5"
-                    style={{ color: theme.textSecondary }}
-                  >
-                    114 Surahs
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => router.push("/reading-session")}
-                  className="flex-1 rounded-[22px] p-4 border"
-                  style={{
-                    backgroundColor: theme.softAccent,
-                    borderColor: theme.accent + "40",
-                  }}
-                >
-                  <MaterialCommunityIcons
-                    name="timer-outline"
-                    size={22}
-                    color={theme.accent}
-                  />
-                  <Text
-                    className="mt-2 text-xs font-bold"
-                    style={{ color: theme.text }}
-                  >
-                    Morning Calm
-                  </Text>
-                  <Text
-                    className="text-[10px] mt-0.5"
-                    style={{ color: theme.textSecondary }}
-                  >
-                    Timed session
-                  </Text>
-                </TouchableOpacity>
-              </View>
-              <View className="px-4 -mt-1 mb-3">
+              <View className="px-4 mt-3 mb-3">
                 <TouchableOpacity
                   onPress={() => router.push("/quran")}
                   className="rounded-[22px] p-4 border"
@@ -374,7 +319,7 @@ export default function AyahScreen() {
                     <View className="ml-3 flex-1">
                       <Text
                         className="text-xs font-bold"
-                        style={{ color: theme.text }}
+                        style={{ color: theme.accent }}
                       >
                         16 Line Quran Reading
                       </Text>
@@ -427,7 +372,7 @@ export default function AyahScreen() {
                         <Text
                           className="text-xs font-bold"
                           style={{
-                            color: active ? "#fff" : theme.textSecondary,
+                            color: active ? theme.onAccent : theme.textSecondary,
                           }}
                         >
                           {opt.label}
@@ -469,7 +414,7 @@ export default function AyahScreen() {
             >
               <Text
                 className="text-lg font-bold mb-1"
-                style={{ color: theme.text }}
+                style={{ color: theme.accent }}
               >
                 Personal Reflection
               </Text>
@@ -515,7 +460,7 @@ export default function AyahScreen() {
                   className="flex-1 rounded-2xl py-3 items-center"
                   style={{ backgroundColor: theme.accent }}
                 >
-                  <Text className="font-bold text-white">Save</Text>
+                  <Text className="font-bold" style={{ color: theme.onAccent }}>Save</Text>
                 </TouchableOpacity>
               </View>
             </View>

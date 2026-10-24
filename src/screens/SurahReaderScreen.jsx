@@ -3,11 +3,9 @@ import {
   useFonts,
 } from "@expo-google-fonts/scheherazade-new";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import * as Network from "expo-network";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, {
   useCallback,
-  useEffect,
   useMemo,
   useRef,
   useState,
@@ -17,20 +15,19 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import AyahItem from "../components/quran/AyahItem";
 import SurahHeader from "../components/quran/SurahHeader";
 import SwipeBackContainer from "../components/ui/SwipeBackContainer";
+import {
+  OFFLINE_LANGUAGES,
+  surahTranslationMap,
+  useTranslationData,
+} from "../constants/offlineTranslations";
 import { useSession } from "../context/SessionContext";
 import { useTheme } from "../context/ThemeContext";
 import { useToast } from "../context/ToastContext";
 import { useAyahInteraction } from "../hooks/useAyahInteraction";
 import { useSurah } from "../hooks/useSurah";
+import { useSurahAudioDownload } from "../hooks/useSurahAudioDownload";
 
-const LANGUAGE_OPTIONS = [
-  { key: "offline-en", label: "English (Offline)", edition: null },
-  { key: "ur.jalandhry", label: "Urdu", edition: "ur.jalandhry" },
-  { key: "hi.hindi", label: "Hindi", edition: "hi.hindi" },
-  { key: "it.piccardo", label: "Italian", edition: "it.piccardo" },
-  { key: "de.bubenheim", label: "German", edition: "de.bubenheim" },
-  { key: "fr.hamidullah", label: "French", edition: "fr.hamidullah" },
-];
+const LANGUAGE_OPTIONS = OFFLINE_LANGUAGES;
 
 export default function SurahReaderScreen() {
   const router = useRouter();
@@ -61,89 +58,29 @@ export default function SurahReaderScreen() {
   } = useAyahInteraction();
   const { session, formatted, pauseSession, resumeSession, abandonSession } =
     useSession();
+  const audioDl = useSurahAudioDownload(surahNumber);
   const { show } = useToast();
 
   const [selectedId, setSelectedId] = useState(null);
   const [showTranslation, setShowTranslation] = useState(true);
   const [selectedLanguage, setSelectedLanguage] = useState("offline-en");
   const [showLanguageModal, setShowLanguageModal] = useState(false);
-  const [translationMap, setTranslationMap] = useState({});
-  const [loadingTranslation, setLoadingTranslation] = useState(false);
   const listRef = useRef(null);
-  const translationCacheRef = useRef({});
 
   const selectedLanguageLabel = useMemo(() => {
     return (
       LANGUAGE_OPTIONS.find((opt) => opt.key === selectedLanguage)?.label ||
-      "English (Offline)"
+      "English"
     );
   }, [selectedLanguage]);
 
-  useEffect(() => {
-    let active = true;
-
-    const loadTranslation = async () => {
-      const option = LANGUAGE_OPTIONS.find(
-        (item) => item.key === selectedLanguage,
-      );
-      if (!option?.edition) {
-        if (active) setTranslationMap({});
-        return;
-      }
-
-      const cacheKey = `${surahNumber}:${option.edition}`;
-      const cached = translationCacheRef.current[cacheKey];
-      if (cached) {
-        if (active) setTranslationMap(cached);
-        return;
-      }
-
-      try {
-        if (active) setLoadingTranslation(true);
-
-        const net = await Network.getNetworkStateAsync();
-        const isOnline =
-          net.isConnected !== false && net.isInternetReachable !== false;
-        if (!isOnline) {
-          throw new Error("No internet connection.");
-        }
-
-        const response = await fetch(
-          `https://api.alquran.cloud/v1/surah/${surahNumber}/${option.edition}`,
-        );
-        if (!response.ok) {
-          throw new Error("Could not load selected translation.");
-        }
-
-        const payload = await response.json();
-        const remoteAyahs = payload?.data?.ayahs ?? [];
-        const map = {};
-        remoteAyahs.forEach((item) => {
-          map[item.numberInSurah] = item.text;
-        });
-
-        translationCacheRef.current[cacheKey] = map;
-        if (active) setTranslationMap(map);
-      } catch (err) {
-        if (active) {
-          setTranslationMap({});
-          setSelectedLanguage("offline-en");
-          show({
-            type: "error",
-            message: err?.message || "Could not load translation.",
-          });
-        }
-      } finally {
-        if (active) setLoadingTranslation(false);
-      }
-    };
-
-    void loadTranslation();
-
-    return () => {
-      active = false;
-    };
-  }, [selectedLanguage, show, surahNumber]);
+  // Translations ship inside the app (assets), loaded on demand: works offline.
+  const { data: translationData, loading: translationLoading } =
+    useTranslationData(selectedLanguage);
+  const translationMap = useMemo(
+    () => surahTranslationMap(translationData, surahNumber),
+    [translationData, surahNumber],
+  );
 
   const displayAyahs = useMemo(() => {
     if (selectedLanguage === "offline-en") return ayahs;
@@ -278,7 +215,7 @@ export default function SurahReaderScreen() {
           <Text
             className="flex-1 text-center font-bold text-base mx-3"
             numberOfLines={1}
-            style={{ color: theme.text }}
+            style={{ color: theme.accent }}
           >
             {meta?.name ?? "Loading..."}
           </Text>
@@ -310,10 +247,66 @@ export default function SurahReaderScreen() {
           >
             <Text
               numberOfLines={1}
-              style={{ fontSize: 10, fontWeight: "700", color: theme.text }}
+              style={{ fontSize: 10, fontWeight: "700", color: theme.accent }}
             >
-              {loadingTranslation ? "Loading..." : selectedLanguageLabel}
+              {translationLoading ? "Loading..." : selectedLanguageLabel}
             </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={async () => {
+              if (audioDl.downloading) {
+                audioDl.cancel();
+                show({ type: "info", message: "Download cancelled." });
+              } else if (audioDl.status.complete) {
+                audioDl.remove();
+                show({ type: "info", message: "Offline audio removed." });
+              } else {
+                show({ type: "info", message: "Downloading audio..." });
+                const res = await audioDl.start();
+                if (res.complete) {
+                  show({ type: "success", message: "Audio ready offline." });
+                } else if (!res.cancelled) {
+                  show({
+                    type: "error",
+                    message: "Download incomplete. Check your internet.",
+                  });
+                }
+              }
+            }}
+            className="h-10 rounded-full items-center justify-center border ml-2 px-3 flex-row"
+            style={{
+              borderColor: audioDl.status.complete
+                ? theme.accent
+                : theme.border,
+              backgroundColor: audioDl.status.complete
+                ? theme.softAccent
+                : theme.cardBackground,
+            }}
+          >
+            <MaterialCommunityIcons
+              name={
+                audioDl.downloading
+                  ? "close-circle-outline"
+                  : audioDl.status.complete
+                    ? "check-circle-outline"
+                    : "download-outline"
+              }
+              size={16}
+              color={audioDl.status.complete ? theme.accent : theme.textSecondary}
+            />
+            {audioDl.downloading ? (
+              <Text
+                style={{
+                  fontSize: 10,
+                  fontWeight: "700",
+                  color: theme.accent,
+                  marginLeft: 4,
+                }}
+              >
+                {audioDl.status.done}/{audioDl.status.total}
+              </Text>
+            ) : null}
           </TouchableOpacity>
         </View>
 
@@ -374,7 +367,7 @@ export default function SurahReaderScreen() {
                   type: "warning",
                   title: "Session Ended Early",
                   message:
-                    "Streak not counted — complete the full session to earn your streak.",
+                    "Session ended early.",
                 });
                 abandonSession();
               }}
