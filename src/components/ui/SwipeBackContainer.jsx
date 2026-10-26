@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import React, { useRef } from "react";
+import React, { useMemo } from "react";
 import { PanResponder, View } from "react-native";
 
 export default function SwipeBackContainer({
@@ -9,8 +9,8 @@ export default function SwipeBackContainer({
 }) {
   const router = useRouter();
 
-  const panResponder = useRef(
-    PanResponder.create({
+  const panResponder = useMemo(
+    () => PanResponder.create({
       onMoveShouldSetPanResponder: (_evt, gesture) => {
         if (!enabled) return false;
         return (
@@ -27,7 +27,8 @@ export default function SwipeBackContainer({
         }
       },
     }),
-  ).current;
+    [enabled, router, threshold],
+  );
 
   return (
     <View style={{ flex: 1 }} {...panResponder.panHandlers}>

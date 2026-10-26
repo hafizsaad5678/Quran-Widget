@@ -15,6 +15,8 @@ export default function NavCard({ theme, icon, label, subtitle, onPress }) {
         borderColor: theme.border,
       }}
       onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${label}${subtitle ? `, ${subtitle}` : ""}`}
     >
       <MaterialCommunityIcons name={icon} size={24} color={theme.accent} />
       <Text
