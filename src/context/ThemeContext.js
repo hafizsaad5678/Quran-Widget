@@ -2,21 +2,22 @@ import { useColorScheme as useNativeWindColorScheme } from "nativewind";
 import React, { createContext, useContext, useEffect } from "react";
 import { useColorScheme as useSystemColorScheme } from "react-native";
 import { useAppStore } from "../store/useAppStore";
+import { COLORS } from "../constants/theme";
 
 const ThemeContext = createContext();
 
 export const lightTheme = {
-  background: "#F0F0F5", // Very light cool gray (Apple-style minimum)
-  cardBackground: "rgba(255, 255, 255, 0.6)", // Jelly glass
+  background: COLORS.light.background,
+  cardBackground: COLORS.light.card,
   cardAlternative: "rgba(0, 0, 0, 0.03)", // Jelly dark tint
-  text: "#000000",
-  textSecondary: "rgba(0, 0, 0, 0.5)",
+  text: COLORS.light.text,
+  textSecondary: COLORS.light.textSecondary,
   textDisabled: "rgba(0, 0, 0, 0.2)",
-  accent: "#8A6A12", // Deep gold for readability on light backgrounds
-  onAccent: "#FFFFFF", // text/icons placed on top of the accent color
+  accent: COLORS.light.accent,
+  onAccent: COLORS.light.onAccent,
   secondary: "rgba(0, 0, 0, 0.05)",
-  softAccent: "rgba(138, 106, 18, 0.15)",
-  border: "rgba(0, 0, 0, 0.05)", // Almost invisible
+  softAccent: COLORS.light.softAccent,
+  border: COLORS.light.border,
   ultraLight: "rgba(255, 255, 255, 0.8)",
   error: "#FF3B30",
   headerBackground: "rgba(255, 255, 255, 0.5)", // Jelly header
@@ -28,17 +29,17 @@ export const lightTheme = {
 };
 
 export const darkTheme = {
-  background: "#000000", // Pure OLED black
-  cardBackground: "rgba(255, 255, 255, 0.08)", // Jelly glass overlay
+  background: COLORS.dark.background,
+  cardBackground: COLORS.dark.card,
   cardAlternative: "rgba(255, 255, 255, 0.04)",
-  text: "#FFFFFF",
-  textSecondary: "rgba(255, 255, 255, 0.5)",
+  text: COLORS.dark.text,
+  textSecondary: COLORS.dark.textSecondary,
   textDisabled: "rgba(255, 255, 255, 0.2)",
-  accent: "#E6CA72", // Single elegant Gold
-  onAccent: "#1A1405", // dark text on the light gold (readable)
+  accent: COLORS.dark.accent,
+  onAccent: COLORS.dark.onAccent,
   secondary: "rgba(255, 255, 255, 0.08)",
-  softAccent: "rgba(230, 202, 114, 0.15)",
-  border: "rgba(255, 255, 255, 0.1)", // Glass border effect
+  softAccent: COLORS.dark.softAccent,
+  border: COLORS.dark.border,
   ultraLight: "rgba(255, 255, 255, 0.02)",
   error: "#FF453A",
   headerBackground: "rgba(255, 255, 255, 0.08)", // Jelly header

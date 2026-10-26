@@ -8,22 +8,22 @@ module.exports = {
       colors: {
         sanctuary: {
           background: {
-            DEFAULT: "#fff8f2",
-            dark: "#161513",
+            DEFAULT: require("./src/constants/theme").COLORS.light.background,
+            dark: require("./src/constants/theme").COLORS.dark.background,
           },
           card: {
-            DEFAULT: "#fffcf9",
-            dark: "#21201d",
+            DEFAULT: require("./src/constants/theme").COLORS.light.card,
+            dark: require("./src/constants/theme").COLORS.dark.card,
           },
           accent: {
-            DEFAULT: "#b0926a",
+            DEFAULT: require("./src/constants/theme").COLORS.light.accent,
             soft: "#f5e1a7",
           },
           text: {
-            DEFAULT: "#231a08",
-            dark: "#e3c196",
-            muted: "#7c7769",
-            mutedDark: "#9a9483",
+            DEFAULT: require("./src/constants/theme").COLORS.light.text,
+            dark: require("./src/constants/theme").COLORS.dark.text,
+            muted: require("./src/constants/theme").COLORS.light.textSecondary,
+            mutedDark: require("./src/constants/theme").COLORS.dark.textSecondary,
           },
           border: {
             DEFAULT: "#cdc6b6",
