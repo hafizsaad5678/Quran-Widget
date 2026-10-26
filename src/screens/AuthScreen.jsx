@@ -34,6 +34,8 @@ export default function AuthScreen() {
   const authEnabled = isSupabaseConfigured;
 
   useEffect(() => {
+    // Auth is disabled in the offline build, but keep this screen ready for a future cloud build.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsSignUp(params?.mode === "signup");
   }, [params?.mode]);
 

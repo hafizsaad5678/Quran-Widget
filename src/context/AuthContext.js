@@ -17,7 +17,7 @@ const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => Boolean(supabase?.auth));
   const currentUserIdRef = useRef(null);
 
   const resetLocalUserData = useCallback(() => {
@@ -70,8 +70,6 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     if (!supabase?.auth) {
-      setUser(null);
-      setLoading(false);
       return () => {};
     }
 
