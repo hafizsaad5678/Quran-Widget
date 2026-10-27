@@ -6,6 +6,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, {
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -26,6 +27,7 @@ import { useToast } from "../context/ToastContext";
 import { useAyahInteraction } from "../hooks/useAyahInteraction";
 import { useSurah } from "../hooks/useSurah";
 import { useSurahAudioDownload } from "../hooks/useSurahAudioDownload";
+import { useAppStore } from "../store/useAppStore";
 
 const LANGUAGE_OPTIONS = OFFLINE_LANGUAGES;
 
@@ -61,11 +63,74 @@ export default function SurahReaderScreen() {
   const audioDl = useSurahAudioDownload(surahNumber);
   const { show } = useToast();
 
-  const [selectedId, setSelectedId] = useState(null);
+  const rawAyahParam = Array.isArray(params?.ayah) ? params.ayah[0] : params?.ayah;
+  const startAyah = Number.parseInt(String(rawAyahParam ?? ""), 10) || 0;
+  const [selectedId, setSelectedId] = useState(
+    startAyah > 0 ? `${surahNumber}:${startAyah}` : null,
+  );
   const [showTranslation, setShowTranslation] = useState(true);
   const [selectedLanguage, setSelectedLanguage] = useState("offline-en");
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const listRef = useRef(null);
+
+  // Resume position + bookmarks
+  const setLastRead = useAppStore((st) => st.setLastRead);
+  const toggleBookmark = useAppStore((st) => st.toggleBookmark);
+  const bookmarks = useAppStore((st) => st.bookmarks);
+  const selectedAyahNumber = selectedId
+    ? Number(String(selectedId).split(":")[1])
+    : 0;
+  const bookmarkId = selectedAyahNumber
+    ? `ayah:${surahNumber}:${selectedAyahNumber}`
+    : null;
+  const isBookmarked = bookmarkId
+    ? bookmarks.some((b) => b.id === bookmarkId)
+    : false;
+
+  useEffect(() => {
+    if (!meta?.name) return;
+    setLastRead({
+      type: "surah",
+      surah: surahNumber,
+      surahName: meta.name,
+      ayah: selectedAyahNumber || undefined,
+    });
+  }, [meta?.name, surahNumber, selectedAyahNumber, setLastRead]);
+
+  // When resuming, jump to the saved ayah once the list is ready.
+  useEffect(() => {
+    if (!startAyah || !ayahs.length) return undefined;
+    const timer = setTimeout(() => {
+      try {
+        listRef.current?.scrollToIndex({
+          index: Math.min(startAyah, ayahs.length) - 1,
+          animated: false,
+        });
+      } catch (_error) {
+        // list not measured yet; onScrollToIndexFailed retries
+      }
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [startAyah, ayahs.length]);
+
+  const handleBookmark = () => {
+    if (!bookmarkId) {
+      show({ type: "info", message: "Tap an ayah first, then bookmark it." });
+      return;
+    }
+    toggleBookmark({
+      id: bookmarkId,
+      type: "ayah",
+      surah: surahNumber,
+      surahName: meta?.name || "Quran",
+      ayah: selectedAyahNumber,
+      label: `${meta?.name || "Quran"} · Ayah ${selectedAyahNumber}`,
+    });
+    show({
+      type: "success",
+      message: isBookmarked ? "Bookmark removed." : "Ayah bookmarked.",
+    });
+  };
 
   const selectedLanguageLabel = useMemo(() => {
     return (
@@ -308,6 +373,23 @@ export default function SurahReaderScreen() {
               </Text>
             ) : null}
           </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={handleBookmark}
+            accessibilityRole="button"
+            accessibilityLabel={isBookmarked ? "Remove bookmark" : "Bookmark selected ayah"}
+            className="h-10 w-10 rounded-full items-center justify-center border ml-2"
+            style={{
+              borderColor: isBookmarked ? theme.accent : theme.border,
+              backgroundColor: theme.cardBackground,
+            }}
+          >
+            <MaterialCommunityIcons
+              name={isBookmarked ? "bookmark-check" : "bookmark-plus-outline"}
+              size={20}
+              color={theme.accent}
+            />
+          </TouchableOpacity>
         </View>
 
         {/* Session timer strip */}
@@ -383,6 +465,18 @@ export default function SurahReaderScreen() {
 
         <FlatList
           ref={listRef}
+          onScrollToIndexFailed={(info) => {
+            listRef.current?.scrollToOffset({
+              offset: info.averageItemLength * info.index,
+              animated: false,
+            });
+            setTimeout(() => {
+              listRef.current?.scrollToIndex({
+                index: info.index,
+                animated: false,
+              });
+            }, 250);
+          }}
           data={displayAyahs}
           keyExtractor={keyExtractor}
           renderItem={renderItem}
@@ -399,11 +493,6 @@ export default function SurahReaderScreen() {
           maxToRenderPerBatch={20}
           windowSize={10}
           removeClippedSubviews
-          getItemLayout={(_, index) => ({
-            length: showTranslation ? 140 : 100,
-            offset: (showTranslation ? 140 : 100) * index,
-            index,
-          })}
         />
 
         <Modal

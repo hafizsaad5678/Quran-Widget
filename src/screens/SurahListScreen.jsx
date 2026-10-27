@@ -3,6 +3,7 @@ import { useRouter } from "expo-router";
 import React, { useMemo, useState } from "react";
 import {
   FlatList,
+  ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
@@ -12,6 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import SwipeBackContainer from "../components/ui/SwipeBackContainer";
 import { useTheme } from "../context/ThemeContext";
 import { useSurahList } from "../hooks/useSurah";
+import { useAppStore } from "../store/useAppStore";
 
 const SurahRow = React.memo(({ surah, onPress, theme }) => (
   <TouchableOpacity
@@ -69,6 +71,24 @@ export default function SurahListScreen() {
 
   const openSurah = (number) => {
     router.push(`/surah/${number}`);
+  };
+
+  const lastRead = useAppStore((st) => st.lastRead);
+  const bookmarks = useAppStore((st) => st.bookmarks);
+  const removeBookmark = useAppStore((st) => st.removeBookmark);
+
+  const openPlace = (place) => {
+    if (place.type === "page") {
+      router.push({
+        pathname: "/quran-page-reader",
+        params: { page: place.page },
+      });
+    } else {
+      router.push({
+        pathname: `/surah/${place.surah}`,
+        params: place.ayah ? { ayah: place.ayah } : {},
+      });
+    }
   };
 
   return (
@@ -180,6 +200,72 @@ export default function SurahListScreen() {
               color={theme.textSecondary}
             />
           </TouchableOpacity>
+
+          {/* Continue + bookmarks: only shown when something is saved */}
+          {lastRead || bookmarks.length > 0 ? (
+            <View className="mt-3">
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ gap: 8 }}
+              >
+                {lastRead ? (
+                  <TouchableOpacity
+                    onPress={() => openPlace(lastRead)}
+                    className="flex-row items-center rounded-full px-4 py-2"
+                    style={{ backgroundColor: theme.accent }}
+                  >
+                    <MaterialCommunityIcons
+                      name="play-circle-outline"
+                      size={16}
+                      color={theme.onAccent}
+                    />
+                    <Text
+                      className="ml-2 text-xs font-bold"
+                      style={{ color: theme.onAccent }}
+                    >
+                      Continue ·{" "}
+                      {lastRead.type === "page"
+                        ? `${lastRead.surahName} p.${lastRead.page}`
+                        : `${lastRead.surahName}${lastRead.ayah ? `:${lastRead.ayah}` : ""}`}
+                    </Text>
+                  </TouchableOpacity>
+                ) : null}
+                {bookmarks.map((b) => (
+                  <TouchableOpacity
+                    key={b.id}
+                    onPress={() => openPlace(b)}
+                    onLongPress={() => removeBookmark(b.id)}
+                    className="flex-row items-center rounded-full border px-4 py-2"
+                    style={{
+                      borderColor: theme.border,
+                      backgroundColor: theme.cardBackground,
+                    }}
+                  >
+                    <MaterialCommunityIcons
+                      name="bookmark"
+                      size={14}
+                      color={theme.accent}
+                    />
+                    <Text
+                      className="ml-2 text-xs font-bold"
+                      style={{ color: theme.accent }}
+                    >
+                      {b.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+              {bookmarks.length > 0 ? (
+                <Text
+                  className="mt-2 text-[10px]"
+                  style={{ color: theme.textSecondary }}
+                >
+                  Press and hold a bookmark to remove it.
+                </Text>
+              ) : null}
+            </View>
+          ) : null}
         </View>
 
         <FlatList
