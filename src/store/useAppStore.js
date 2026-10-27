@@ -57,6 +57,10 @@ export const useAppStore = create(
       },
       appUsageSecondsByDay: {},
       lastSession: null, // { date, durationMinutes, surahName }
+      // Reading position to resume from: { type: "surah"|"page", surah, surahName, ayah?, page?, updatedAt }
+      lastRead: null,
+      // Saved places: { id, type: "ayah"|"page", surah, surahName, ayah?, page?, label, createdAt }
+      bookmarks: [],
       settings: {
         translationKey: "sahih",
         themeMode: "auto", // 'light', 'dark', 'auto'
@@ -66,7 +70,7 @@ export const useAppStore = create(
         widgetFontSettings: {
           arabicSize: 20,
           translationSize: 14,
-          lineSpacing: 1.25,
+          lineSpacing: 1.9,
           arabicFont: "platform",
           translationFont: "platform",
         },
@@ -200,9 +204,60 @@ export const useAppStore = create(
         // REMOVED: void syncNow(); - No cloud sync
       },
 
+      setLastRead: (entry) => {
+        if (!entry?.surah) return;
+        set({ lastRead: { ...entry, updatedAt: new Date().toISOString() } });
+      },
+
+      toggleBookmark: (bookmark) => {
+        if (!bookmark?.id) return;
+        set((state) => {
+          const exists = state.bookmarks.some((b) => b.id === bookmark.id);
+          return {
+            bookmarks: exists
+              ? state.bookmarks.filter((b) => b.id !== bookmark.id)
+              : [
+                  { ...bookmark, createdAt: new Date().toISOString() },
+                  ...state.bookmarks,
+                ],
+          };
+        });
+      },
+
+      removeBookmark: (bookmarkId) => {
+        set((state) => ({
+          bookmarks: state.bookmarks.filter((b) => b.id !== bookmarkId),
+        }));
+      },
+
       addCollection: (collection) => {
-        set((state) => ({ collections: [...state.collections, collection] }));
+        if (!collection?.id || !collection?.name?.trim()) return;
+        set((state) => {
+          if (state.collections.some((item) => item.id === collection.id)) {
+            return state;
+          }
+          return {
+            collections: [
+              ...state.collections,
+              {
+                ...collection,
+                name: collection.name.trim(),
+                ayahIds: Array.isArray(collection.ayahIds)
+                  ? collection.ayahIds
+                  : [],
+              },
+            ],
+          };
+        });
         // REMOVED: void syncNow(); - No cloud sync
+      },
+
+      removeCollection: (collectionId) => {
+        set((state) => ({
+          collections: state.collections.filter(
+            (item) => item.id !== collectionId,
+          ),
+        }));
       },
 
       toggleAyahInCollection: (collectionId, ayahId) => {
@@ -236,6 +291,8 @@ export const useAppStore = create(
           },
           appUsageSecondsByDay: {},
           lastSession: null,
+          lastRead: null,
+          bookmarks: [],
           settings: {
             ...state.settings,
             translationKey: "sahih",
@@ -245,7 +302,7 @@ export const useAppStore = create(
             widgetFontSettings: {
               arabicSize: 20,
               translationSize: 14,
-              lineSpacing: 1.25,
+              lineSpacing: 1.9,
             },
             reminderSettings: {
               enabled: true,

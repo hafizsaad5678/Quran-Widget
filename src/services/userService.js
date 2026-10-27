@@ -114,7 +114,7 @@ export const getWidgetFontSettings = async () => {
   return getJson(STORAGE_KEYS.WIDGET_FONT_SETTINGS, {
     arabicSize: 20,
     translationSize: 14,
-    lineSpacing: 1.25,
+    lineSpacing: 1.9,
     arabicFont: "platform",
     translationFont: "platform",
   });
@@ -157,7 +157,7 @@ export const saveWidgetFontSettings = async (settings) => {
     ),
     lineSpacing: Math.min(
       2,
-      Math.max(1, Number(settings?.lineSpacing || 1.25)),
+      Math.max(1, Number(settings?.lineSpacing || 1.9)),
     ),
     arabicFont: settings?.arabicFont || "platform",
     translationFont: settings?.translationFont || "platform",
