@@ -4,7 +4,7 @@ import {
 } from "@expo-google-fonts/scheherazade-new";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -17,11 +17,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { getSurahStartPage } from "../constants/mushafPages";
 import { getAllSurahs } from "../constants/quranCurated";
 import { getPageAyahs } from "../services/mushafData";
+import { useTheme } from "../context/ThemeContext";
+import { useAppStore } from "../store/useAppStore";
 
 const MIN_PAGE = 1;
 const MAX_PAGE = 604;
-const TEXT_COLOR = "#111111";
-
 // Same palette the reader always had (4 rule groups, everything else plain).
 const TAJWEED_COLORS = {
   ghunnah: "#c62828",
@@ -71,6 +71,7 @@ const AyahLine = React.memo(function AyahLine({
   ayah,
   isRukuStart,
   fontLoaded,
+  theme,
 }) {
   const segments = ayah.segments;
 
@@ -82,7 +83,7 @@ const AyahLine = React.memo(function AyahLine({
             position: "absolute",
             right: 0,
             top: 8,
-            color: "#444",
+            color: theme.textSecondary,
             fontSize: 14,
             fontWeight: "700",
           }}
@@ -94,7 +95,7 @@ const AyahLine = React.memo(function AyahLine({
         style={{
           textAlign: "justify",
           writingDirection: "rtl",
-          color: TEXT_COLOR,
+           color: theme.text,
           fontSize: 22,
           lineHeight: 48,
           fontFamily: fontLoaded ? "ScheherazadeNew_400Regular" : undefined,
@@ -105,13 +106,13 @@ const AyahLine = React.memo(function AyahLine({
             key={`${ayah.number}-${idx}`}
             style={{
               color:
-                resolveColor(segment.rules, TAJWEED_COLOR_MAP) || TEXT_COLOR,
+                 resolveColor(segment.rules, TAJWEED_COLOR_MAP) || theme.text,
             }}
           >
             {segment.text}
           </Text>
         ))}
-        <Text style={{ color: TEXT_COLOR }}>
+        <Text style={{ color: theme.text }}>
           {` ﴾${toArabicDigits(ayah.numberInSurah)}﴿`}
         </Text>
       </Text>
@@ -121,14 +122,23 @@ const AyahLine = React.memo(function AyahLine({
 
 export default function QuranPageReaderScreen() {
   const router = useRouter();
+  const { theme } = useTheme();
   const params = useLocalSearchParams();
   const rawSurahParam = Array.isArray(params?.surah)
     ? params.surah[0]
     : params?.surah;
   const initialSurah = Number(rawSurahParam || 0);
   const [fontsLoaded] = useFonts({ ScheherazadeNew_400Regular });
+  const rawPageParam = Array.isArray(params?.page)
+    ? params.page[0]
+    : params?.page;
+  const initialPage = Number(rawPageParam || 0);
   const [pageNumber, setPageNumber] = useState(
-    initialSurah > 0 ? getSurahStartPage(initialSurah) : 1,
+    initialPage >= MIN_PAGE && initialPage <= MAX_PAGE
+      ? initialPage
+      : initialSurah > 0
+        ? getSurahStartPage(initialSurah)
+        : 1,
   );
   const [selectedSurah, setSelectedSurah] = useState(
     initialSurah > 0 ? initialSurah : null,
@@ -144,6 +154,33 @@ export default function QuranPageReaderScreen() {
     });
     return map;
   }, []);
+
+  const surahLatinNames = useMemo(() => {
+    const map = {};
+    getAllSurahs().forEach((item) => {
+      map[item.number] = item.name;
+    });
+    return map;
+  }, []);
+
+  // Resume + bookmarks
+  const setLastRead = useAppStore((st) => st.setLastRead);
+  const toggleBookmark = useAppStore((st) => st.toggleBookmark);
+  const bookmarks = useAppStore((st) => st.bookmarks);
+  const pageSurah = pageAyahs[0]?.surah?.number;
+  const pageSurahName = surahLatinNames[pageSurah] || "Quran";
+  const bookmarkId = `page:${pageNumber}`;
+  const isBookmarked = bookmarks.some((b) => b.id === bookmarkId);
+
+  useEffect(() => {
+    if (!pageSurah) return;
+    setLastRead({
+      type: "page",
+      page: pageNumber,
+      surah: pageSurah,
+      surahName: pageSurahName,
+    });
+  }, [pageNumber, pageSurah, pageSurahName, setLastRead]);
 
   const visibleAyahs = useMemo(() => {
     if (!selectedSurah) return pageAyahs;
@@ -204,32 +241,56 @@ export default function QuranPageReaderScreen() {
   }, [visibleAyahs]);
 
   return (
-    <SafeAreaView className="flex-1" style={{ backgroundColor: "#ffffff" }}>
+    <SafeAreaView className="flex-1" style={{ backgroundColor: theme.background }}>
       <View
         className="flex-row items-center justify-between px-4 py-3 border-b"
-        style={{ borderBottomColor: "#e5e7eb", backgroundColor: "#ffffff" }}
+        style={{ borderBottomColor: theme.border, backgroundColor: theme.background }}
       >
         <TouchableOpacity
           onPress={() => router.back()}
           className="w-10 h-10 rounded-full items-center justify-center border"
-          style={{ borderColor: "#d1d5db", backgroundColor: "#ffffff" }}
+          style={{ borderColor: theme.border, backgroundColor: theme.cardBackground }}
         >
           <MaterialCommunityIcons
             name="chevron-left"
             size={22}
-            color="#111827"
+            color={theme.accent}
           />
         </TouchableOpacity>
-        <Text style={{ fontSize: 14, fontWeight: "700", color: "#111827" }}>
+        <Text style={{ fontSize: 14, fontWeight: "700", color: theme.accent }}>
           Tajweed Mushaf
         </Text>
-        <View style={{ width: 40 }} />
+        <TouchableOpacity
+          onPress={() =>
+            toggleBookmark({
+              id: bookmarkId,
+              type: "page",
+              surah: pageSurah,
+              surahName: pageSurahName,
+              page: pageNumber,
+              label: `${pageSurahName} · Page ${pageNumber}`,
+            })
+          }
+          accessibilityRole="button"
+          accessibilityLabel={isBookmarked ? "Remove bookmark" : "Bookmark this page"}
+          className="w-10 h-10 rounded-full items-center justify-center border"
+          style={{
+            borderColor: isBookmarked ? theme.accent : theme.border,
+            backgroundColor: theme.cardBackground,
+          }}
+        >
+          <MaterialCommunityIcons
+            name={isBookmarked ? "bookmark-check" : "bookmark-plus-outline"}
+            size={22}
+            color={theme.accent}
+          />
+        </TouchableOpacity>
       </View>
 
       {!fontsLoaded ? (
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#111827" />
-          <Text style={{ marginTop: 10, color: "#6b7280", fontSize: 13 }}>
+          <ActivityIndicator size="large" color={theme.accent} />
+          <Text style={{ marginTop: 10, color: theme.textSecondary, fontSize: 13 }}>
             Loading...
           </Text>
         </View>
@@ -253,8 +314,8 @@ export default function QuranPageReaderScreen() {
                 width: "100%",
                 maxWidth: 420,
                 alignSelf: "center",
-                backgroundColor: "#ffffff",
-                borderColor: "#d8d8d8",
+                backgroundColor: theme.cardBackground,
+                borderColor: theme.border,
                 borderWidth: 1,
                 borderRadius: 6,
                 paddingHorizontal: 12,
@@ -270,17 +331,17 @@ export default function QuranPageReaderScreen() {
                 }}
               >
                 <Text
-                  style={{ color: "#333", fontSize: 12, fontWeight: "600" }}
+                  style={{ color: theme.textSecondary, fontSize: 12, fontWeight: "600" }}
                 >
                   الجزء {toArabicDigits(headerInfo.juz)}
                 </Text>
                 <Text
-                  style={{ color: "#111", fontSize: 12, fontWeight: "700" }}
+                  style={{ color: theme.text, fontSize: 12, fontWeight: "700" }}
                 >
                   {toArabicDigits(pageNumber)}
                 </Text>
                 <Text
-                  style={{ color: "#333", fontSize: 12, fontWeight: "600" }}
+                  style={{ color: theme.textSecondary, fontSize: 12, fontWeight: "600" }}
                 >
                   {headerInfo.surah}
                 </Text>
@@ -296,19 +357,19 @@ export default function QuranPageReaderScreen() {
                     maxWidth: 420,
                     alignSelf: "center",
                     borderWidth: 1,
-                    borderColor: "#b8b8b8",
+                    borderColor: theme.border,
                     borderRadius: 10,
                     paddingVertical: 8,
                     marginTop: 6,
                     marginBottom: 6,
-                    backgroundColor: "#fafafa",
+                    backgroundColor: theme.cardAlternative,
                   }}
                 >
                   <Text
                     style={{
                       textAlign: "center",
                       fontSize: 20,
-                      color: "#111",
+                      color: theme.text,
                       fontFamily: "ScheherazadeNew_400Regular",
                     }}
                   >
@@ -329,7 +390,7 @@ export default function QuranPageReaderScreen() {
                     writingDirection: "rtl",
                     fontSize: 24,
                     lineHeight: 52,
-                    color: "#111",
+                    color: theme.text,
                     fontFamily: "ScheherazadeNew_400Regular",
                   }}
                 >
@@ -346,6 +407,7 @@ export default function QuranPageReaderScreen() {
                   ayah={block.ayah}
                   isRukuStart={block.isRukuStart}
                   fontLoaded={fontsLoaded}
+                  theme={theme}
                 />
               </View>
             );
@@ -357,9 +419,9 @@ export default function QuranPageReaderScreen() {
                 maxWidth: 420,
                 alignSelf: "center",
                 marginTop: 10,
-                backgroundColor: "#ffffff",
+                backgroundColor: theme.cardBackground,
                 borderWidth: 1,
-                borderColor: "#e0e0e0",
+                borderColor: theme.border,
                 borderRadius: 8,
                 paddingHorizontal: 10,
                 paddingVertical: 8,
@@ -368,7 +430,7 @@ export default function QuranPageReaderScreen() {
               <Text
                 style={{
                   fontSize: 11,
-                  color: "#6b7280",
+                  color: theme.textSecondary,
                   textAlign: "center",
                   marginBottom: 4,
                 }}
@@ -395,7 +457,7 @@ export default function QuranPageReaderScreen() {
                 <Text style={{ color: TAJWEED_COLORS.madd, fontSize: 12 }}>
                   Madd
                 </Text>
-                <Text style={{ color: TEXT_COLOR, fontSize: 12 }}>
+                <Text style={{ color: theme.text, fontSize: 12 }}>
                   Normal
                 </Text>
               </View>
@@ -414,12 +476,12 @@ export default function QuranPageReaderScreen() {
           className="flex-1 rounded-full py-3 items-center"
           style={{
             backgroundColor:
-              pageNumber <= MIN_PAGE ? "#e5e7eb" : "#111827",
+              pageNumber <= MIN_PAGE ? theme.cardAlternative : theme.accent,
           }}
         >
           <Text
             style={{
-              color: pageNumber <= MIN_PAGE ? "#6b7280" : "#ffffff",
+              color: pageNumber <= MIN_PAGE ? theme.textSecondary : theme.onAccent,
               fontWeight: "700",
               fontSize: 12,
             }}
@@ -436,12 +498,12 @@ export default function QuranPageReaderScreen() {
           className="flex-1 rounded-full py-3 items-center"
           style={{
             backgroundColor:
-              pageNumber >= MAX_PAGE ? "#e5e7eb" : "#111827",
+              pageNumber >= MAX_PAGE ? theme.cardAlternative : theme.accent,
           }}
         >
           <Text
             style={{
-              color: pageNumber >= MAX_PAGE ? "#6b7280" : "#ffffff",
+              color: pageNumber >= MAX_PAGE ? theme.textSecondary : theme.onAccent,
               fontWeight: "700",
               fontSize: 12,
             }}

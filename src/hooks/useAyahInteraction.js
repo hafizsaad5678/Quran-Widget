@@ -26,6 +26,7 @@ export const useAyahInteraction = () => {
   const queueRef = useRef([]);
   const indexRef = useRef(-1);
   const stoppedRef = useRef(false);
+  const playQueueAtRef = useRef(null);
   const [activeAyahId, setActiveAyahId] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
@@ -162,7 +163,7 @@ export const useAyahInteraction = () => {
             !status.isLooping &&
             !stoppedRef.current
           ) {
-            void playQueueAt(index + 1);
+            void playQueueAtRef.current?.(index + 1);
           }
         });
 
@@ -183,6 +184,10 @@ export const useAyahInteraction = () => {
       unloadPreloadedAudio,
     ],
   );
+
+  useEffect(() => {
+    playQueueAtRef.current = playQueueAt;
+  }, [playQueueAt]);
 
   const stopAyah = useCallback(
     async (ayahId) => {
