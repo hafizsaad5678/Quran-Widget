@@ -20,6 +20,7 @@ import { signOut } from "../services/authService";
 import {
   areNotificationsAvailable,
   requestNotificationPermission,
+  sendTestNotification,
   setReminderEnabled,
   updateReminderWindow,
 } from "../services/notificationService";
@@ -63,7 +64,7 @@ const SegmentedControl = ({ options, activeValue, onSelect, theme }) => (
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const { themeMode, setThemeMode, theme } = useTheme();
+  const { themeMode, setThemeMode, theme, isDarkMode } = useTheme();
   const { user, displayName } = useAuth();
   const { show, showAlert, showConfirm } = useToast();
   const [isSavingReminder, setIsSavingReminder] = useState(false);
@@ -81,11 +82,13 @@ export default function SettingsScreen() {
       icon: "weather-partly-cloudy",
     },
     { label: "Evening (7:00 PM)", value: "evening", icon: "weather-night" },
+    { label: "Custom time", value: "custom", icon: "clock-outline" },
   ];
 
   const handleReminderChange = async (window) => {
-    updateSettings({ reminderSettings: { ...reminderSettings, window } });
-    const ok = await updateReminderWindow(window);
+    const next = { ...reminderSettings, window };
+    updateSettings({ reminderSettings: next });
+    const ok = await updateReminderWindow(window, next.customHour, next.customMinute);
     if (ok) {
       show?.({
         type: "success",
@@ -100,6 +103,41 @@ export default function SettingsScreen() {
       title: "Reminder Error",
       message: "Could not update reminder schedule.",
     });
+  };
+
+  const changeCustomTime = async (part, amount) => {
+    const current = Number(reminderSettings?.[part] ?? (part === "customHour" ? 8 : 0));
+    const max = part === "customHour" ? 23 : 59;
+    const nextValue = (current + amount + max + 1) % (max + 1);
+    const next = { ...reminderSettings, window: "custom", [part]: nextValue };
+    updateSettings({ reminderSettings: next });
+    await updateReminderWindow("custom", next.customHour, next.customMinute);
+  };
+
+  const handleTestNotification = async () => {
+    if (!areNotificationsAvailable) {
+      (showAlert ?? show)?.({
+        type: "info",
+        title: "Notifications Unavailable",
+        message:
+          "Push notifications need a development build or APK on Android (Expo Go does not support them).",
+      });
+      return;
+    }
+    const ok = await sendTestNotification();
+    show?.(
+      ok
+        ? {
+          type: "success",
+          title: "Test sent",
+          message: "A sample reminder will appear at the top in a few seconds.",
+        }
+        : {
+          type: "warning",
+          title: "Could not send",
+          message: "Allow notifications for the app in your device settings.",
+        },
+    );
   };
 
   const handleReminderToggle = async (enabled) => {
@@ -313,8 +351,15 @@ export default function SettingsScreen() {
                 <Switch
                   value={reminderSettings?.enabled !== false}
                   onValueChange={handleReminderToggle}
-                  trackColor={{ false: "#eee", true: "#b0926a" }}
-                  thumbColor="white"
+                  disabled={isSavingReminder}
+                  // Solid colors: the theme's card colors are translucent and
+                  // made the toggle look washed out.
+                  trackColor={{
+                    false: isDarkMode ? "#3A3A3C" : "#D1D1D6",
+                    true: theme.accent,
+                  }}
+                  thumbColor="#FFFFFF"
+                  ios_backgroundColor={isDarkMode ? "#3A3A3C" : "#D1D1D6"}
                 />
               </View>
 
@@ -353,6 +398,46 @@ export default function SettingsScreen() {
                     </TouchableOpacity>
                   );
                 })}
+              {reminderSettings?.enabled !== false && (
+                <TouchableOpacity
+                  onPress={handleTestNotification}
+                  className="mt-5 flex-row items-center justify-center rounded-full border py-3"
+                  style={{ borderColor: theme.accent }}
+                >
+                  <MaterialCommunityIcons
+                    name="bell-ring-outline"
+                    size={16}
+                    color={theme.accent}
+                  />
+                  <Text
+                    className="ml-2 text-xs font-bold"
+                    style={{ color: theme.accent }}
+                  >
+                    Send test notification
+                  </Text>
+                </TouchableOpacity>
+              )}
+              {reminderSettings?.enabled !== false && reminderSettings?.window === "custom" && (
+                <View className="mt-4 flex-row items-center justify-center gap-4">
+                  {[
+                    { label: "Hour", key: "customHour", value: reminderSettings.customHour ?? 8 },
+                    { label: "Minute", key: "customMinute", value: String(reminderSettings.customMinute ?? 0).padStart(2, "0") },
+                  ].map((part) => (
+                    <View key={part.key} className="items-center">
+                      <Text className="text-[10px] uppercase tracking-wider" style={{ color: theme.textSecondary }}>{part.label}</Text>
+                      <View className="mt-1 flex-row items-center gap-3">
+                        <TouchableOpacity onPress={() => changeCustomTime(part.key, -1)} accessibilityLabel={`Decrease ${part.label}`}>
+                          <MaterialCommunityIcons name="minus-circle-outline" size={24} color={theme.accent} />
+                        </TouchableOpacity>
+                        <Text className="text-lg font-bold" style={{ color: theme.text }}>{part.value}</Text>
+                        <TouchableOpacity onPress={() => changeCustomTime(part.key, 1)} accessibilityLabel={`Increase ${part.label}`}>
+                          <MaterialCommunityIcons name="plus-circle-outline" size={24} color={theme.accent} />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              )}
             </GlassCard>
           </View>
 
@@ -430,17 +515,13 @@ export default function SettingsScreen() {
                 >
                   Offline mode active
                 </Text>
-                <Text
-                  className="mt-1 text-xs"
-                  style={{ color: theme.textSecondary }}
-                >
-                  Cloud sync is unavailable in this build.
-                </Text>
+
+
               </View>
             )}
 
             <Text className="text-[8px] font-bold text-sanctuary-text-muted uppercase tracking-[3px]">
-              Version 2.4.0 • Ayah Connect
+              Version 1.0.0 • Ayah Connect
             </Text>
           </View>
         </ScrollView>
