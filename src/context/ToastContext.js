@@ -3,31 +3,38 @@ import React, {
     createContext,
     useCallback,
     useContext,
-    useRef,
     useState,
 } from "react";
 import { Animated, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { COLORS } from "../constants/theme";
+import { useTheme } from "./ThemeContext";
 
 const ToastContext = createContext(null);
 
 const ICONS = {
-  success: { name: "check-circle-outline", color: "#4caf50" },
-  error: { name: "alert-circle-outline", color: "#f44336" },
-  warning: { name: "alert-outline", color: "#ff9800" },
-  info: { name: "information-outline", color: "#b0926a" },
+  success: { name: "check-circle-outline", color: COLORS.status.success },
+  error: { name: "alert-circle-outline", color: COLORS.status.error },
+  warning: { name: "alert-outline", color: COLORS.status.warning },
+  info: { name: "information-outline", color: COLORS.status.info },
 };
 
 function ToastItem({ toast, onDismiss }) {
-  const opacity = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(-20)).current;
-  const icon = ICONS[toast.type] ?? ICONS.info;
+  const { theme, isDarkMode } = useTheme();
+  const [opacity] = useState(() => new Animated.Value(0));
+  const [translateY] = useState(() => new Animated.Value(-20));
+  const baseIcon = ICONS[toast.type] ?? ICONS.info;
+  // Success is yellow/gold (never green): bright gold on dark, deeper on light.
+  const icon =
+    toast.type === "success"
+      ? { ...baseIcon, color: isDarkMode ? theme.accent : "#C99700" }
+      : baseIcon;
   const isConfirm = toast.variant === "confirm";
-  const cardBackground = "#facc15";
-  const titleColor = "#000";
-  const messageColor = "#000";
-  const closeColor = "#000";
-  const borderColor = "#eab308";
+
+  // Solid surface that matches the app (cards are translucent, which would let
+  // the screen show through the toast).
+  const surface = isDarkMode ? "#1C1C1E" : "#FFFFFF";
+  const borderColor = `${theme.accent}40`;
 
   const dismiss = useCallback(() => {
     Animated.parallel([
@@ -68,14 +75,13 @@ function ToastItem({ toast, onDismiss }) {
       style={{
         opacity,
         transform: [{ translateY }],
-        marginBottom: 8,
-        borderRadius: 18,
-        overflow: "hidden",
+        marginBottom: 10,
+        borderRadius: 24,
         shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 12,
-        elevation: 8,
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: isDarkMode ? 0.5 : 0.18,
+        shadowRadius: 16,
+        elevation: 10,
       }}
     >
       <TouchableOpacity
@@ -84,55 +90,74 @@ function ToastItem({ toast, onDismiss }) {
         style={{
           flexDirection: "row",
           alignItems: "center",
-          paddingHorizontal: 16,
-          paddingVertical: isConfirm ? 12 : 14,
-          backgroundColor: cardBackground,
+          paddingHorizontal: 14,
+          paddingVertical: 14,
+          backgroundColor: surface,
           borderWidth: 1,
           borderColor,
-          borderLeftWidth: 4,
-          borderLeftColor: icon.color,
-          borderRadius: 18,
+          borderRadius: 24,
           gap: 12,
         }}
       >
-        <MaterialCommunityIcons name={icon.name} size={22} color={icon.color} />
+        <View
+          style={{
+            width: 38,
+            height: 38,
+            borderRadius: 19,
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: `${icon.color}26`,
+          }}
+        >
+          <MaterialCommunityIcons
+            name={icon.name}
+            size={20}
+            color={icon.color}
+          />
+        </View>
         <View style={{ flex: 1 }}>
           {toast.title && (
             <Text
               style={{
                 fontSize: 13,
                 fontWeight: "700",
-                color: titleColor,
+                color: theme.accent,
                 marginBottom: 2,
               }}
             >
               {toast.title}
             </Text>
           )}
-          <Text style={{ fontSize: 13, color: messageColor, lineHeight: 18 }}>
+          <Text
+            style={{
+              fontSize: 12.5,
+              lineHeight: 18,
+              color: theme.text,
+              opacity: 0.75,
+            }}
+          >
             {toast.message}
           </Text>
           {isConfirm && (
-            <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
+            <View style={{ flexDirection: "row", gap: 8, marginTop: 12 }}>
               <TouchableOpacity
                 onPress={() => {
                   toast.onCancel?.();
                   dismiss();
                 }}
                 style={{
-                  paddingHorizontal: 12,
-                  paddingVertical: 7,
+                  paddingHorizontal: 14,
+                  paddingVertical: 8,
                   borderRadius: 999,
                   borderWidth: 1,
-                  borderColor,
-                  backgroundColor: "#fde68a",
+                  borderColor: theme.accent,
                 }}
               >
                 <Text
                   style={{
                     fontSize: 11,
                     fontWeight: "700",
-                    color: messageColor,
+                    color: theme.accent,
                   }}
                 >
                   {toast.cancelText || "Cancel"}
@@ -144,14 +169,18 @@ function ToastItem({ toast, onDismiss }) {
                   dismiss();
                 }}
                 style={{
-                  paddingHorizontal: 12,
-                  paddingVertical: 7,
+                  paddingHorizontal: 14,
+                  paddingVertical: 8,
                   borderRadius: 999,
-                  backgroundColor: "#111827",
+                  backgroundColor: theme.accent,
                 }}
               >
                 <Text
-                  style={{ fontSize: 11, fontWeight: "700", color: "#fff" }}
+                  style={{
+                    fontSize: 11,
+                    fontWeight: "700",
+                    color: theme.onAccent,
+                  }}
                 >
                   {toast.confirmText || "Confirm"}
                 </Text>
@@ -160,7 +189,11 @@ function ToastItem({ toast, onDismiss }) {
           )}
         </View>
         {!isConfirm && (
-          <MaterialCommunityIcons name="close" size={16} color={closeColor} />
+          <MaterialCommunityIcons
+            name="close"
+            size={16}
+            color={theme.textSecondary}
+          />
         )}
       </TouchableOpacity>
     </Animated.View>
