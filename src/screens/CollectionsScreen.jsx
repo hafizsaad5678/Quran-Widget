@@ -6,7 +6,18 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { FlatList, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import {
+  FlatList,
+  Keyboard,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AyahDisplay } from "../components/AyahDisplay";
 import GlassCard from "../components/ui/GlassCard";
@@ -26,11 +37,34 @@ export default function CollectionsScreen() {
 
   const [activeId, setActiveId] = useState(collections[0]?.id || null);
   const [previewAyah, setPreviewAyah] = useState(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newCollectionName, setNewCollectionName] = useState("");
+  const addCollection = useAppStore((s) => s.addCollection);
+  const removeCollection = useAppStore((s) => s.removeCollection);
 
   const activeCollection = collections.find((c) => c.id === activeId) || null;
   const collectionAyat = activeCollection
     ? ayat.filter((a) => activeCollection.ayahIds.includes(a.id))
     : [];
+
+  const handleDelete = (collection) => {
+    removeCollection(collection.id);
+    if (collection.id === activeId) {
+      const next = collections.find((c) => c.id !== collection.id);
+      setActiveId(next?.id || null);
+      setPreviewAyah(null);
+    }
+  };
+
+  const createCollection = () => {
+    const name = newCollectionName.trim();
+    if (!name) return;
+    const id = `${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}`;
+    addCollection({ id, name, ayahIds: [], color: theme.accent, icon: "bookmark-outline" });
+    setActiveId(id);
+    setNewCollectionName("");
+    setShowCreateModal(false);
+  };
 
   return (
     <SwipeBackContainer>
@@ -41,12 +75,20 @@ export default function CollectionsScreen() {
         onLeftPress={() => router.back()}
       />
 
-      {/* Collection tabs */}
+      {/* Collection carousel */}
       <View className="mt-4 px-5">
+        <Text
+          className="mb-2 text-[10px] font-bold uppercase tracking-[2px]"
+          style={{ color: theme.textSecondary }}
+        >
+          Your collections
+        </Text>
+        <View className="flex-row items-center">
         <ScrollView
           horizontal
+          className="flex-1"
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: 10, paddingRight: 20 }}
+          contentContainerStyle={{ gap: 10, paddingRight: 8 }}
         >
           {collections.map((c) => {
             const isActive = c.id === activeId;
@@ -54,35 +96,55 @@ export default function CollectionsScreen() {
               <TouchableOpacity
                 key={c.id}
                 onPress={() => { setActiveId(c.id); setPreviewAyah(null); }}
-                className="flex-row items-center rounded-full px-4 py-2 border"
+                className="rounded-2xl border px-4 py-3"
                 style={{
                   backgroundColor: isActive ? theme.accent : theme.cardBackground,
                   borderColor: isActive ? theme.accent : theme.border,
+                  minWidth: 132,
                 }}
               >
-                <MaterialCommunityIcons
-                  name={c.icon || "bookmark-outline"}
-                  size={15}
-                  color={isActive ? theme.onAccent : theme.accent}
-                />
+                <View className="flex-row items-center justify-between">
+                  <MaterialCommunityIcons
+                    name={c.icon || "bookmark-outline"}
+                    size={17}
+                    color={isActive ? theme.onAccent : theme.accent}
+                  />
+                  <View className="flex-row items-center">
+                    <View
+                      className="h-6 min-w-6 items-center justify-center rounded-full px-1"
+                      style={{ backgroundColor: isActive ? "rgba(255,255,255,0.25)" : theme.softAccent }}
+                    >
+                      <Text className="text-[9px] font-bold" style={{ color: isActive ? theme.onAccent : theme.accent }}>
+                        {c.ayahIds.length}
+                      </Text>
+                    </View>
+                    <TouchableOpacity
+                      onPress={() => handleDelete(c)}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      className="ml-2"
+                      accessibilityRole="button"
+                      accessibilityLabel={`Delete ${c.name}`}
+                    >
+                      <MaterialCommunityIcons
+                        name="trash-can-outline"
+                        size={13}
+                        color={isActive ? theme.onAccent : theme.textSecondary}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                </View>
                 <Text
-                  className="ml-2 text-xs font-bold"
+                  className="mt-2 text-xs font-bold"
+                  numberOfLines={1}
                   style={{ color: isActive ? theme.onAccent : theme.text }}
                 >
                   {c.name}
                 </Text>
-                <View
-                  className="ml-2 w-5 h-5 rounded-full items-center justify-center"
-                  style={{ backgroundColor: isActive ? "rgba(255,255,255,0.25)" : theme.softAccent }}
-                >
-                  <Text className="text-[9px] font-bold" style={{ color: isActive ? theme.onAccent : theme.accent }}>
-                    {c.ayahIds.length}
-                  </Text>
-                </View>
               </TouchableOpacity>
             );
           })}
         </ScrollView>
+        </View>
       </View>
 
       {/* Active collection header */}
@@ -191,6 +253,71 @@ export default function CollectionsScreen() {
           </TouchableOpacity>
         )}
       />
+
+      {/* Floating round button (bottom right): new collection */}
+      <TouchableOpacity
+        onPress={() => setShowCreateModal(true)}
+        activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel="Create new collection"
+        className="items-center justify-center rounded-full"
+        style={{
+          position: "absolute",
+          right: 20,
+          bottom: 28,
+          width: 56,
+          height: 56,
+          backgroundColor: theme.accent,
+          shadowColor: "#000",
+          shadowOpacity: 0.25,
+          shadowRadius: 8,
+          shadowOffset: { width: 0, height: 4 },
+          elevation: 6,
+        }}
+      >
+        <MaterialCommunityIcons name="plus" size={28} color={theme.onAccent} />
+      </TouchableOpacity>
+
+      <Modal
+        visible={showCreateModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowCreateModal(false)}
+      >
+        <KeyboardAvoidingView
+          className="flex-1 justify-end bg-black/50 px-4"
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 12 : 0}
+        >
+          <View className="mb-4 rounded-[32px] border p-6" style={{ backgroundColor: theme.background, borderColor: theme.border }}>
+            <Text className="text-lg font-bold" style={{ color: theme.accent }}>Create Collection</Text>
+            <Text className="text-xs mt-1 mb-4" style={{ color: theme.textSecondary }}>
+              Give your saved ayahs a meaningful place.
+            </Text>
+            <TextInput
+              autoFocus
+              value={newCollectionName}
+              onChangeText={setNewCollectionName}
+              placeholder="Collection name"
+              placeholderTextColor={theme.textSecondary}
+              onSubmitEditing={() => {
+                Keyboard.dismiss();
+                createCollection();
+              }}
+              className="rounded-2xl border px-4 py-3"
+              style={{ color: theme.text, borderColor: theme.border, backgroundColor: theme.cardBackground }}
+            />
+            <View className="flex-row gap-3 mt-4">
+              <TouchableOpacity onPress={() => setShowCreateModal(false)} className="flex-1 items-center rounded-2xl border py-3" style={{ borderColor: theme.border }}>
+                <Text className="font-bold" style={{ color: theme.textSecondary }}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => { Keyboard.dismiss(); createCollection(); }} disabled={!newCollectionName.trim()} className="flex-1 items-center rounded-2xl py-3" style={{ backgroundColor: newCollectionName.trim() ? theme.accent : theme.cardAlternative }}>
+                <Text className="font-bold" style={{ color: newCollectionName.trim() ? theme.onAccent : theme.textSecondary }}>Create</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </SafeAreaView>
     </SwipeBackContainer>
   );
