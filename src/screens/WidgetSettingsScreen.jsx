@@ -3,6 +3,7 @@ import { useRouter } from "expo-router";
 import React from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import WidgetPreview from "../components/ui/WidgetPreview";
 import WidgetSettingsForm from "../components/ui/WidgetSettingsForm";
 import { useTheme } from "../context/ThemeContext";
 import { useDailyAyah } from "../hooks/useDailyAyah";
@@ -15,8 +16,9 @@ export default function WidgetSettingsScreen() {
   const {
     savingWidget,
     widgetSettings,
-    adjustSetting,
-    setColorSetting,
+    updateSettings,
+    setBackgroundColor,
+    setTextColor,
     applyWidgetSettings,
   } = useWidgetSettings();
 
@@ -30,30 +32,6 @@ export default function WidgetSettingsScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
       <View style={{ flex: 1 }}>
-        <View
-          style={{
-            position: "absolute",
-            width: 220,
-            height: 220,
-            borderRadius: 999,
-            backgroundColor: theme.softAccent,
-            top: -40,
-            right: -60,
-          }}
-        />
-        <View
-          style={{
-            position: "absolute",
-            width: 180,
-            height: 180,
-            borderRadius: 999,
-            backgroundColor: theme.softAccent,
-            bottom: 120,
-            left: -70,
-            opacity: 0.65,
-          }}
-        />
-
         <View
           style={{
             paddingHorizontal: 16,
@@ -97,7 +75,7 @@ export default function WidgetSettingsScreen() {
             <Text
               style={{ color: theme.textSecondary, fontSize: 11, opacity: 0.9 }}
             >
-              Customize widget look and behavior
+              Size, refresh and background
             </Text>
           </View>
 
@@ -110,15 +88,14 @@ export default function WidgetSettingsScreen() {
               borderRadius: 999,
               alignItems: "center",
               justifyContent: "center",
-              backgroundColor: theme.buttonBackground,
-              borderWidth: 1,
-              borderColor: theme.border,
+              backgroundColor: theme.accent,
               paddingHorizontal: 14,
+              opacity: savingWidget ? 0.6 : 1,
             }}
           >
             <Text
               style={{
-                color: theme.buttonText,
+                color: theme.onAccent,
                 fontWeight: "800",
                 fontSize: 12,
               }}
@@ -128,20 +105,51 @@ export default function WidgetSettingsScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* Pinned preview: stays in place while the settings scroll below */}
+        <View
+          style={{
+            alignItems: "center",
+            paddingHorizontal: 14,
+            paddingBottom: 12,
+          }}
+        >
+          <WidgetPreview
+            data={{
+              tag: `${ayah?.surahName || "Surah"} ${ayah?.surahNumber || ""}:${ayah?.ayahNumber || ""}`,
+              title: ayah?.arabic || "فَإِنَّ مَعَ الْعُسْرِ يُسْرًا",
+              translation:
+                ayah?.translation || "Indeed, with hardship comes ease.",
+              backgroundColor: widgetSettings.backgroundColor,
+              arabicColor: widgetSettings.arabicColor,
+              translationColor: widgetSettings.translationColor,
+              metaColor: widgetSettings.metaColor,
+              arabicSize: widgetSettings.arabicSize,
+              translationSize: widgetSettings.translationSize,
+              arabicLines: widgetSettings.arabicLines,
+              translationLines: widgetSettings.translationLines,
+              previewStyle: "home",
+              width: widgetSettings.width,
+              height: widgetSettings.height,
+              glassEnabled: widgetSettings.glassEnabled,
+              glassOpacity: widgetSettings.glassOpacity,
+              borderOpacity: widgetSettings.borderOpacity,
+              arabicFont: widgetSettings.arabicFont,
+              translationFont: widgetSettings.translationFont,
+            }}
+          />
+        </View>
+
         <ScrollView
           style={{ flex: 1 }}
           contentContainerStyle={{ paddingHorizontal: 14, paddingBottom: 28 }}
           showsVerticalScrollIndicator={false}
         >
           <WidgetSettingsForm
-            ayah={ayah}
             theme={theme}
             widgetSettings={widgetSettings}
-            savingWidget={savingWidget}
-            onAdjustSetting={adjustSetting}
-            onSetColor={setColorSetting}
-            onCancel={() => router.back()}
-            onApply={handleApply}
+            onUpdate={updateSettings}
+            onSetBackground={setBackgroundColor}
+            onSetText={setTextColor}
           />
         </ScrollView>
       </View>

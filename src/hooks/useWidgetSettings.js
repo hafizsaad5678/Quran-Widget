@@ -24,16 +24,35 @@ const MIRROR_GLASS = {
   borderOpacity: 0.34,
 };
 
+// Text colors that stay readable on the chosen background.
+const isLightColor = (hex) => {
+  const v = String(hex || "#000000").replace("#", "");
+  const full = v.length === 3 ? v.split("").map((c) => c + c).join("") : v.padEnd(6, "0");
+  const r = parseInt(full.slice(0, 2), 16);
+  const g = parseInt(full.slice(2, 4), 16);
+  const b = parseInt(full.slice(4, 6), 16);
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.62;
+};
+
+export const textColorsFor = (backgroundColor) =>
+  isLightColor(backgroundColor)
+    ? { arabicColor: "#1F1A10", translationColor: "#3B3426", metaColor: "#7A5C00" }
+    : {
+        arabicColor: WIDGET_STYLES.nightGold.arabicColor,
+        translationColor: WIDGET_STYLES.nightGold.translationColor,
+        metaColor: WIDGET_STYLES.nightGold.metaColor,
+      };
+
 const initialWidgetSettings = {
   width: 340,
   height: 170,
   arabicLines: 3,
   translationLines: 3,
-  previewStyle: "widget",
+  previewStyle: "home", // simple, Home-like preview
   intervalHours: 6,
   arabicSize: 20,
   translationSize: 14,
-  lineSpacing: 1.25,
+  lineSpacing: 1.9,
   arabicFont: "platform",       // Font family for Arabic
   translationFont: "platform",  // Font family for translation
   backgroundColor: WIDGET_STYLES.nightGold.backgroundColor,
@@ -47,6 +66,8 @@ export function useWidgetSettings() {
   const toast = useToast();
   const [savingWidget, setSavingWidget] = useState(false);
   const [widgetSettings, setWidgetSettings] = useState(initialWidgetSettings);
+  // Once the user picks a text color, changing the background no longer overrides it.
+  const [textColorChosen, setTextColorChosen] = useState(false);
 
   useEffect(() => {
     const loadWidgetConfig = async () => {
@@ -66,12 +87,12 @@ export function useWidgetSettings() {
         height: layout.height,
         arabicLines: layout.arabicLines ?? 3,
         translationLines: layout.translationLines ?? 3,
-        previewStyle: layout.previewStyle === "home" ? "home" : "widget",
+        previewStyle: "home",
         intervalHours: intervalHours ?? 6,
         arabicSize: fonts.arabicSize ?? 20,
         translationSize: fonts.translationSize ?? 14,
-        lineSpacing: fonts.lineSpacing ?? 1.25,
-        arabicFont: fonts.arabicFont ?? "platform",
+        lineSpacing: Math.max(fonts.lineSpacing ?? 1.9, 1.9),
+        arabicFont: "platform", // Arabic always uses the platform font
         translationFont: fonts.translationFont ?? "platform",
         backgroundColor:
           styleSettings?.backgroundColor || baseStyle.backgroundColor,
@@ -97,6 +118,31 @@ export function useWidgetSettings() {
     setWidgetSettings((prev) => ({ ...prev, [field]: color }));
   };
 
+  // Set several fields at once (used by sliders).
+  const updateSettings = (partial) => {
+    setWidgetSettings((prev) => ({ ...prev, ...partial }));
+  };
+
+  // Background: text follows it automatically until the user picks a text color.
+  const setBackgroundColor = (color) => {
+    setWidgetSettings((prev) => ({
+      ...prev,
+      backgroundColor: color,
+      ...(textColorChosen ? {} : textColorsFor(color)),
+    }));
+  };
+
+  // One color for all widget text (Arabic, translation and reference).
+  const setTextColor = (color) => {
+    setTextColorChosen(true);
+    setWidgetSettings((prev) => ({
+      ...prev,
+      arabicColor: color,
+      translationColor: color,
+      metaColor: color,
+    }));
+  };
+
   const applyWidgetSettings = async () => {
     setSavingWidget(true);
     try {
@@ -112,8 +158,8 @@ export function useWidgetSettings() {
         saveWidgetFontSettings({
           arabicSize: widgetSettings.arabicSize,
           translationSize: widgetSettings.translationSize,
-          lineSpacing: widgetSettings.lineSpacing || 1.25, // Save line spacing
-          arabicFont: widgetSettings.arabicFont,
+          lineSpacing: Math.max(widgetSettings.lineSpacing || 1.9, 1.9), // Arabic needs tall lines
+          arabicFont: "platform",
           translationFont: widgetSettings.translationFont,
         }),
         saveWidgetLayoutSettings({
@@ -151,7 +197,7 @@ export function useWidgetSettings() {
         message: updated
           ? "Widget style updated successfully."
           : "Saved. Install APK to see widget changes.",
-        type: updated ? "success" : "info",
+        type: "success",
       });
 
       return true;
@@ -172,6 +218,9 @@ export function useWidgetSettings() {
     widgetSettings,
     adjustSetting,
     setColorSetting,
+    updateSettings,
+    setBackgroundColor,
+    setTextColor,
     applyWidgetSettings,
   };
 }
