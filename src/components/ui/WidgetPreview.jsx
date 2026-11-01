@@ -1,13 +1,28 @@
 import React from "react";
 import { Platform, Text, View } from "react-native";
 
-const ARABIC_WIDGET_FONT = Platform.select({
-  ios: "Geeza Pro",
-  default: "serif",
-});
 const CLEAN_WIDGET_FONT = Platform.select({
   ios: "System",
   default: "sans-serif",
+});
+
+const FONT_MAP = Platform.select({
+  ios: {
+    arabic: { platform: "Geeza Pro", serif: "Baghdad", sans: "Al Nile" },
+    translation: {
+      platform: "System",
+      serif: "Georgia",
+      sans: "Helvetica Neue",
+    },
+  },
+  default: {
+    arabic: { platform: "serif", serif: "serif", sans: "sans-serif" },
+    translation: {
+      platform: "sans-serif",
+      serif: "serif",
+      sans: "sans-serif",
+    },
+  },
 });
 
 const withHexAlpha = (hex, opacity = 1) => {
@@ -48,22 +63,15 @@ export default function WidgetPreview({ data }) {
 
   const isHomePreview = previewStyle === "home";
 
+  // iOS has no "serif"/"sans-serif" families, so use real installed fonts there.
   const resolveArabicFont = () => {
-    if (!data) return ARABIC_WIDGET_FONT;
-    const f = data.arabicFont || "platform";
-    if (f === "platform") return ARABIC_WIDGET_FONT;
-    if (f === "serif") return "serif";
-    if (f === "sans") return "sans-serif";
-    return f;
+    const f = data?.arabicFont || "platform";
+    return FONT_MAP.arabic[f] || FONT_MAP.arabic.platform;
   };
 
   const resolveTranslationFont = () => {
-    if (!data) return CLEAN_WIDGET_FONT;
-    const f = data.translationFont || "platform";
-    if (f === "platform") return CLEAN_WIDGET_FONT;
-    if (f === "serif") return "serif";
-    if (f === "sans") return "sans-serif";
-    return f;
+    const f = data?.translationFont || "platform";
+    return FONT_MAP.translation[f] || FONT_MAP.translation.platform;
   };
 
   return (
@@ -109,39 +117,48 @@ export default function WidgetPreview({ data }) {
         }}
       />
       <View className="items-center">
-        {!isHomePreview ? (
-          <View
-            className="mb-4 h-[3px] w-12 rounded-full"
-            style={{ backgroundColor: `${metaColor || "#b0926a"}99` }}
-          />
-        ) : null}
-      </View>
-
-      <View className="flex-1 items-center justify-center px-1">
         {isHomePreview ? (
           <Text
-            className="mb-2 text-[11px] font-bold"
+            className="mb-1 text-[11px] font-bold"
+            numberOfLines={1}
             style={{ color: metaColor || "#9f947e", letterSpacing: 1.2 }}
           >
             {tag}
           </Text>
-        ) : null}
+        ) : (
+          <View
+            className="mb-4 h-[3px] w-12 rounded-full"
+            style={{ backgroundColor: `${metaColor || "#b0926a"}99` }}
+          />
+        )}
+      </View>
+
+      <View
+        className="flex-1 items-center justify-center px-1"
+        style={{ minHeight: 0 }}
+      >
         <Text
           className="text-center font-bold"
           style={{
+            flexShrink: 1,
             color: arabicColor || "#d3b45c",
             fontSize: arabicSize || 24,
             fontFamily: resolveArabicFont(),
-            lineHeight: (arabicSize || 24) * 1.35,
+            lineHeight: (arabicSize || 24) * 1.75,
+            paddingTop: 4,
+            includeFontPadding: true,
           }}
           dir="rtl"
           numberOfLines={arabicLines || 3}
+          adjustsFontSizeToFit
+          minimumFontScale={0.6}
         >
           {title}
         </Text>
         <Text
           className={isHomePreview ? "mt-2 text-center" : "mt-3 text-center"}
           style={{
+            flexShrink: 1,
             color: translationColor || "#ddd7c8",
             fontSize: translationSize || 10,
             fontFamily: resolveTranslationFont(),
@@ -149,6 +166,8 @@ export default function WidgetPreview({ data }) {
             fontStyle: isHomePreview ? "italic" : "normal",
           }}
           numberOfLines={translationLines || 3}
+          adjustsFontSizeToFit
+          minimumFontScale={0.7}
         >
           &quot;{translation}&quot;
         </Text>
