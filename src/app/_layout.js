@@ -1,20 +1,13 @@
-import {
-  Stack,
-  useRootNavigationState,
-  useRouter,
-  useSegments,
-} from "expo-router";
+import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useRef } from "react";
-import { AppState, StyleSheet, View } from "react-native";
+import { AppState } from "react-native";
 import "../../global.css";
-import { AuthProvider, useAuth } from "../context/AuthContext";
+import { AuthProvider } from "../context/AuthContext";
 import { SessionProvider } from "../context/SessionContext";
-import { ThemeProvider, useTheme } from "../context/ThemeContext";
+import { ThemeProvider } from "../context/ThemeContext";
 import { ToastProvider } from "../context/ToastContext";
-import { startNetworkSyncListener } from "../services/cloudSyncService";
 import { initializeNotifications } from "../services/notificationService";
-import { isSupabaseConfigured } from "../services/supabaseClient";
 import { registerAndroidWidgetBackgroundSync } from "../services/widgetSync";
 import { useAppStore } from "../store/useAppStore";
 
@@ -50,10 +43,6 @@ import { useAppStore } from "../store/useAppStore";
 //   return null;
 // }
 
-function AuthGate() {
-  return null; // Auth disabled
-}
-
 // COMMENTED OUT: Startup mask disabled since auth is disabled
 // function StartupMask() {
 //   const { loading } = useAuth();
@@ -68,10 +57,6 @@ function AuthGate() {
 //     />
 //   );
 // }
-
-function StartupMask() {
-  return null; // No loading mask needed
-}
 
 function AppUsageTracker() {
   const addAppUsageSeconds = useAppStore((s) => s.addAppUsageSeconds);
@@ -141,6 +126,7 @@ export default function RootLayout() {
               <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
               <Stack.Screen name="about" />
               <Stack.Screen name="settings" />
+              <Stack.Screen name="qibla" />
               <Stack.Screen name="collections" />
               <Stack.Screen name="situation/[key]" />
               <Stack.Screen name="quran" />
@@ -149,6 +135,7 @@ export default function RootLayout() {
               <Stack.Screen name="widget-settings" />
               <Stack.Screen name="surah/[number]" />
               <Stack.Screen name="reading-session" />
+              <Stack.Screen name="morning-calm" />
             </Stack>
             {/* Global floating session timer — visible on every screen */}
             <StatusBar style="auto" />
@@ -158,10 +145,3 @@ export default function RootLayout() {
     </ThemeProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  startupMask: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 1,
-  },
-});

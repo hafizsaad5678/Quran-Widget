@@ -4,7 +4,7 @@ import {
 } from "@expo-google-fonts/scheherazade-new";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   FlatList,
   Modal,
@@ -20,6 +20,7 @@ import TopBar from "../components/ui/TopBar";
 import { useTheme } from "../context/ThemeContext";
 import { useToast } from "../context/ToastContext";
 import { useAyatLibrary } from "../hooks/useAyatLibrary";
+import { useAppStore } from "../store/useAppStore";
 import {
   getAyahNote,
   markReadToday,
@@ -28,7 +29,7 @@ import {
 } from "../services/userService";
 
 // ─── Selected Ayah Card ───────────────────────────────────────────────────────
-function AyahCard({ ayah, isFav, onFav, onNote, theme, fontLoaded }) {
+function AyahCard({ ayah, isFav, onFav, onNote, onCollection, theme, fontLoaded }) {
   if (!ayah) return null;
 
   const handleShare = () =>
@@ -83,6 +84,22 @@ function AyahCard({ ayah, isFav, onFav, onNote, theme, fontLoaded }) {
           >
             <MaterialCommunityIcons
               name="pencil-outline"
+              size={17}
+              color={theme.textSecondary}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={onCollection}
+            accessibilityLabel="Save ayah to collection"
+            className="w-9 h-9 rounded-full items-center justify-center"
+            style={{
+              backgroundColor: theme.cardBackground,
+              borderWidth: 1,
+              borderColor: theme.border,
+            }}
+          >
+            <MaterialCommunityIcons
+              name="bookmark-plus-outline"
               size={17}
               color={theme.textSecondary}
             />
@@ -237,8 +254,28 @@ export default function AyahScreen() {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [current, setCurrent] = useState(null);
   const [showNoteModal, setShowNoteModal] = useState(false);
+  const [showCollectionModal, setShowCollectionModal] = useState(false);
+  const [newCollectionName, setNewCollectionName] = useState("");
   const [noteText, setNoteText] = useState("");
   const listRef = React.useRef(null);
+  const collections = useAppStore((s) => s.collections);
+  const toggleAyahInCollection = useAppStore((s) => s.toggleAyahInCollection);
+  const addCollection = useAppStore((s) => s.addCollection);
+
+  const filteredAyat = useMemo(() => {
+    return ayat.filter((item) =>
+      showFavoritesOnly ? favorites.includes(item.id) : true,
+    );
+  }, [ayat, favorites, showFavoritesOnly]);
+
+  const chooseAyah = useCallback(async (item) => {
+    if (!item) return;
+    setCurrent(item);
+    listRef.current?.scrollToOffset({ offset: 0, animated: true });
+    await Promise.all([saveAyahToHistory(item), markReadToday()]);
+    const note = await getAyahNote(item.id);
+    setNoteText(note || "");
+  }, []);
 
   useEffect(() => {
     if (!ayat.length) return;
@@ -251,29 +288,31 @@ export default function AyahScreen() {
       );
       if (found) initial = found;
     }
+    // The selected ayah is external route data and must be loaded into local state.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void chooseAyah(initial);
-  }, [ayat, selectedSurah, selectedAyah]);
-
-  const filteredAyat = useMemo(() => {
-    return ayat.filter((item) =>
-      showFavoritesOnly ? favorites.includes(item.id) : true,
-    );
-  }, [ayat, favorites, showFavoritesOnly]);
-
-  const chooseAyah = async (item) => {
-    if (!item) return;
-    setCurrent(item);
-    listRef.current?.scrollToOffset({ offset: 0, animated: true });
-    await Promise.all([saveAyahToHistory(item), markReadToday()]);
-    const note = await getAyahNote(item.id);
-    setNoteText(note || "");
-  };
+  }, [ayat, chooseAyah, selectedSurah, selectedAyah]);
 
   const saveNote = async () => {
     if (!current) return;
     await saveAyahNote(current.id, noteText);
     setShowNoteModal(false);
     show({ type: "success", message: "Reflection saved." });
+  };
+
+  const createCollection = () => {
+    const name = newCollectionName.trim();
+    if (!name) return;
+    const id = `${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}`;
+    addCollection({
+      id,
+      name,
+      ayahIds: [],
+      color: theme.accent,
+      icon: "bookmark-outline",
+    });
+    if (current) toggleAyahInCollection(id, current.id);
+    setNewCollectionName("");
   };
 
   return (
@@ -345,6 +384,7 @@ export default function AyahScreen() {
                 isFav={favorites.includes(current?.id)}
                 onFav={() => current && toggleFavorite(current.id)}
                 onNote={() => setShowNoteModal(true)}
+                onCollection={() => setShowCollectionModal(true)}
                 theme={theme}
                 fontLoaded={fontLoaded}
               />
@@ -390,6 +430,22 @@ export default function AyahScreen() {
               </View>
             </View>
           )}
+          ListEmptyComponent={() => (
+            <View className="items-center px-8 py-16">
+              <MaterialCommunityIcons
+                name="heart-off-outline"
+                size={48}
+                color={theme.textSecondary}
+                style={{ opacity: 0.5 }}
+              />
+              <Text className="mt-4 text-base font-bold text-center" style={{ color: theme.accent }}>
+                No favorite ayahs yet
+              </Text>
+              <Text className="mt-2 text-sm text-center leading-6" style={{ color: theme.textSecondary }}>
+                Tap the heart on an ayah to keep it close for later.
+              </Text>
+            </View>
+          )}
           renderItem={({ item }) => (
             <AyahRow
               item={item}
@@ -401,6 +457,79 @@ export default function AyahScreen() {
             />
           )}
         />
+
+        <Modal
+          visible={showCollectionModal}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setShowCollectionModal(false)}
+        >
+          <View className="flex-1 justify-end bg-black/50 px-4 pb-8">
+            <View
+              className="rounded-[32px] p-6 border"
+              style={{ backgroundColor: theme.background, borderColor: theme.border }}
+            >
+              <Text className="text-lg font-bold mb-1" style={{ color: theme.accent }}>
+                Save to Collection
+              </Text>
+              <Text className="text-xs mb-4" style={{ color: theme.textSecondary }}>
+                Choose a collection for this ayah or create a new one.
+              </Text>
+              <View className="gap-2 mb-4">
+                {collections.map((collection) => {
+                  const saved = collection.ayahIds.includes(current?.id);
+                  return (
+                    <TouchableOpacity
+                      key={collection.id}
+                      onPress={() => {
+                        if (current) toggleAyahInCollection(collection.id, current.id);
+                      }}
+                      className="flex-row items-center rounded-2xl border px-4 py-3"
+                      style={{
+                        borderColor: saved ? theme.accent : theme.border,
+                        backgroundColor: saved ? theme.softAccent : theme.cardBackground,
+                      }}
+                    >
+                      <MaterialCommunityIcons
+                        name={saved ? "bookmark-check" : collection.icon || "bookmark-outline"}
+                        size={20}
+                        color={theme.accent}
+                      />
+                      <Text className="ml-3 flex-1 font-bold" style={{ color: theme.text }}>
+                        {collection.name}
+                      </Text>
+                      {saved && <MaterialCommunityIcons name="check" size={18} color={theme.accent} />}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+              <View
+                className="flex-row items-center rounded-2xl border px-4"
+                style={{ borderColor: theme.border, backgroundColor: theme.cardBackground }}
+              >
+                <TextInput
+                  value={newCollectionName}
+                  onChangeText={setNewCollectionName}
+                  placeholder="New collection name"
+                  placeholderTextColor={theme.textSecondary}
+                  className="flex-1 py-3"
+                  style={{ color: theme.text }}
+                  onSubmitEditing={createCollection}
+                />
+                <TouchableOpacity onPress={createCollection} accessibilityLabel="Create collection">
+                  <MaterialCommunityIcons name="plus-circle" size={24} color={theme.accent} />
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity
+                onPress={() => setShowCollectionModal(false)}
+                className="mt-4 items-center rounded-2xl border py-3"
+                style={{ borderColor: theme.border }}
+              >
+                <Text className="font-bold" style={{ color: theme.textSecondary }}>Done</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
 
         {/* Reflection modal */}
         <Modal visible={showNoteModal} transparent animationType="slide">

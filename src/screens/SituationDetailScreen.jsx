@@ -14,13 +14,15 @@ import SwipeBackContainer from "../components/ui/SwipeBackContainer";
 import TopBar from "../components/ui/TopBar";
 import { findSituation } from "../constants/situations";
 import { useTheme } from "../context/ThemeContext";
+import { useToast } from "../context/ToastContext";
 import { useAyatLibrary } from "../hooks/useAyatLibrary";
 import {
   OFFLINE_LANGUAGES,
   ayahTranslation,
   useTranslationData,
 } from "../constants/offlineTranslations";
-import { resolveAudioSource } from "../services/audioStore";
+import { getLocalAudioUri, resolveAudioSource } from "../services/audioStore";
+import * as Network from "expo-network";
 import { saveAyahToHistory } from "../services/userService";
 
 const LANGUAGE_OPTIONS = OFFLINE_LANGUAGES;
@@ -31,6 +33,7 @@ export default function SituationDetailScreen() {
   const { key } = useLocalSearchParams();
   const situation = findSituation(String(key));
   const { ayat } = useAyatLibrary();
+  const { show } = useToast();
 
   const [selectedId, setSelectedId] = useState(null);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
@@ -55,7 +58,11 @@ export default function SituationDetailScreen() {
   }, [filteredAyat, selectedId]);
 
   useEffect(() => {
-    if (filteredAyat[0]?.id) setSelectedId(filteredAyat[0].id);
+    if (filteredAyat[0]?.id) {
+      // Initialize selection when the route's bundled situation data becomes available.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSelectedId(filteredAyat[0].id);
+    }
   }, [filteredAyat]);
 
   useEffect(() => {
@@ -120,6 +127,13 @@ export default function SituationDetailScreen() {
     if (!audioUrl) return;
 
     try {
+      if (!getLocalAudioUri(currentAyah.globalAyahNumber)) {
+        const network = await Network.getNetworkStateAsync();
+        if (network.isConnected === false || network.isInternetReachable === false) {
+          show({ type: "warning", title: "Audio needs internet", message: "Download this surah from the reader before going offline." });
+          return;
+        }
+      }
       if (isPlayingAudio && audioAyahId === currentAyah.id && sound) {
         await sound.pauseAsync();
         setIsPlayingAudio(false);
@@ -147,6 +161,7 @@ export default function SituationDetailScreen() {
       setIsPlayingAudio(true);
     } catch (_error) {
       setIsPlayingAudio(false);
+      show({ type: "error", message: "Could not load this recitation. Check your connection or download it for offline use." });
     }
   };
 

@@ -134,7 +134,7 @@ export default function SituationSelectorScreen() {
             <TouchableOpacity
               className="self-start rounded-full px-5 py-2"
               style={{ backgroundColor: theme.accent }}
-              onPress={() => router.push("/reading-session")}
+              onPress={() => router.push("/morning-calm")}
             >
               <Text className="text-[10px] font-bold uppercase tracking-[1.8px]" style={{ color: theme.onAccent }}>
                 Start Now
