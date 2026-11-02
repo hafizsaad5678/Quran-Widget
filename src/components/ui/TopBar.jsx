@@ -38,6 +38,8 @@ export default function TopBar({
       <View className="flex-row items-center justify-between px-4 pb-2 pt-3">
         <TouchableOpacity
           onPress={handleLeft}
+          accessibilityRole="button"
+          accessibilityLabel={leftIcon === "chevron-left" ? "Go back" : "Open about"}
           className="h-11 w-11 items-center justify-center rounded-full border"
           style={{ borderColor: theme.border, backgroundColor: theme.cardBackground }}
         >
@@ -58,6 +60,8 @@ export default function TopBar({
 
         <TouchableOpacity
           onPress={handleRight}
+          accessibilityRole="button"
+          accessibilityLabel="Open settings"
           className="h-11 w-11 items-center justify-center rounded-full border"
           style={{ borderColor: theme.border, backgroundColor: theme.cardBackground }}
         >

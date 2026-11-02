@@ -1,17 +1,12 @@
 import NavCard from "../components/ui/NavCard";
 import InfoRow from "../components/ui/InfoRow";
 import { STREAK_ENABLED } from "../constants/features";
-import {
-  ScheherazadeNew_400Regular,
-  useFonts,
-} from "@expo-google-fonts/scheherazade-new";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from "react";
 import {
@@ -20,6 +15,7 @@ import {
   RefreshControl,
   ScrollView,
   Text,
+  Platform,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -32,17 +28,20 @@ import { useAyatLibrary } from "../hooks/useAyatLibrary";
 import { useDailyAyah } from "../hooks/useDailyAyah";
 import { getHistory, getStreakStats } from "../services/userService";
 import { useAppStore } from "../store/useAppStore";
+import { getGregorianText, getHijriDate } from "../utils/hijri";
 
 export default function HomeScreen() {
   const router = useRouter();
   const { theme } = useTheme();
-  const [fontLoaded] = useFonts({ ScheherazadeNew_400Regular });
   const { ayah, nextAyah, prevAyah } = useDailyAyah({
     autoRotateEveryHour: true,
   });
   const { favorites, toggleFavorite } = useAyatLibrary();
   const collections = useAppStore((s) => s.collections);
   const lastSession = useAppStore((s) => s.lastSession);
+  const lastRead = useAppStore((s) => s.lastRead);
+  const hijri = useMemo(() => getHijriDate(), []);
+  const gregorian = useMemo(() => getGregorianText(), []);
   const appUsageSecondsByDay = useAppStore((s) => s.appUsageSecondsByDay);
   // Get font settings from store for home page display
   const fontSettings = useAppStore((s) => s.settings.widgetFontSettings || {
@@ -141,6 +140,8 @@ export default function HomeScreen() {
   }, [appUsageSecondsByDay, streak]);
 
   useEffect(() => {
+    // Load persisted local stats after the first render.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadData();
   }, [loadData]);
 
@@ -151,9 +152,9 @@ export default function HomeScreen() {
   }, [loadData]);
 
   // Swipe left/right on hero card to change ayah
-  const swipePan = useRef(new Animated.Value(0)).current;
-  const swipeResponder = useRef(
-    PanResponder.create({
+  const [swipePan] = useState(() => new Animated.Value(0));
+  const swipeResponder = useMemo(
+    () => PanResponder.create({
       onMoveShouldSetPanResponder: (_, g) =>
         Math.abs(g.dx) > 15 && Math.abs(g.dy) < 40,
       onPanResponderMove: (_, g) => swipePan.setValue(g.dx),
@@ -166,7 +167,8 @@ export default function HomeScreen() {
         }).start();
       },
     }),
-  ).current;
+    [nextAyah, prevAyah, swipePan],
+  );
 
   return (
     <SafeAreaView
@@ -193,23 +195,56 @@ export default function HomeScreen() {
           />
         }
       >
-        <View className="mt-6 mb-6 px-2">
-          <Text
+        <View className="mt-6 mb-6 px-2 flex-row items-center justify-between">
+          <View className="flex-1">
+            <Text
+              style={{
+                fontSize: 20,
+                fontStyle: "italic",
+                fontFamily: "serif",
+                color: theme.text,
+              }}
+            >
+              Today for you
+            </Text>
+            <Text
+              style={{
+                marginTop: 4,
+                fontSize: 12,
+                fontWeight: "700",
+                color: theme.accent,
+              }}
+            >
+              {hijri.text}
+              <Text style={{ color: theme.textSecondary, fontWeight: "400" }}>
+                {`  ·  ${gregorian}`}
+              </Text>
+            </Text>
+          </View>
+          <TouchableOpacity
+            onPress={() => router.push("/qibla")}
+            accessibilityRole="button"
+            accessibilityLabel="Qibla compass"
+            className="h-11 w-11 items-center justify-center rounded-full border"
             style={{
-              fontSize: 20,
-              fontStyle: "italic",
-              fontFamily: "serif",
-              color: theme.text,
+              borderColor: theme.border,
+              backgroundColor: theme.cardBackground,
             }}
           >
-            Today for you
-          </Text>
+            <MaterialCommunityIcons
+              name="compass-outline"
+              size={22}
+              color={theme.accent}
+            />
+          </TouchableOpacity>
         </View>
 
         {/* Hero Ayah Card — swipe or tap arrows to change ayah */}
         <View className="flex-row items-center gap-2">
           <TouchableOpacity
             onPress={prevAyah}
+            accessibilityRole="button"
+            accessibilityLabel="Previous ayah"
             className="w-10 h-10 rounded-full items-center justify-center"
             style={{ backgroundColor: theme.softAccent }}
           >
@@ -255,11 +290,17 @@ export default function HomeScreen() {
                 className="mb-3 text-right"
                 style={{
                   color: theme.text,
-                  fontFamily: fontLoaded
-                    ? "ScheherazadeNew_400Regular"
-                    : undefined,
+                  // Platform Arabic font (system default).
+                  fontFamily: Platform.select({
+                    ios: "Geeza Pro",
+                    default: undefined,
+                  }),
                   fontSize: fontSettings.arabicSize || 31,
-                  lineHeight: (fontSettings.arabicSize || 31) * (fontSettings.lineSpacing || 1.75),
+                  // Arabic diacritics need tall lines or the top gets cut off.
+                  lineHeight:
+                    (fontSettings.arabicSize || 31) *
+                    Math.max(fontSettings.lineSpacing || 1.9, 1.9),
+                  paddingTop: 6,
                 }}
                 numberOfLines={3}
               >
@@ -283,6 +324,8 @@ export default function HomeScreen() {
 
           <TouchableOpacity
             onPress={nextAyah}
+            accessibilityRole="button"
+            accessibilityLabel="Next ayah"
             className="w-10 h-10 rounded-full items-center justify-center"
             style={{ backgroundColor: theme.softAccent }}
           >
@@ -330,6 +373,33 @@ export default function HomeScreen() {
             onPress={() => router.push("/widget-settings")}
           />
         </View>
+
+        {/* Continue reading: only shown once the user has read something */}
+        {lastRead ? (
+          <View className="mt-4">
+            <InfoRow
+              theme={theme}
+              icon="book-open-page-variant-outline"
+              title="Continue reading"
+              subtitle={
+                lastRead.type === "page"
+                  ? `${lastRead.surahName || "Quran"} · Page ${lastRead.page}`
+                  : `${lastRead.surahName || "Quran"}${lastRead.ayah ? ` · Ayah ${lastRead.ayah}` : ""}`
+              }
+              onPress={() =>
+                lastRead.type === "page"
+                  ? router.push({
+                      pathname: "/quran-page-reader",
+                      params: { page: lastRead.page },
+                    })
+                  : router.push({
+                      pathname: `/surah/${lastRead.surah}`,
+                      params: lastRead.ayah ? { ayah: lastRead.ayah } : {},
+                    })
+              }
+            />
+          </View>
+        ) : null}
 
         {/* Journey Progress */}
           {STREAK_ENABLED && (
