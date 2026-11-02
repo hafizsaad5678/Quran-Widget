@@ -3,6 +3,10 @@
  * Shown to unauthenticated users. Displays app feature cards
  * then prompts sign up / sign in.
  */
+import {
+  ScheherazadeNew_400Regular,
+  useFonts,
+} from "@expo-google-fonts/scheherazade-new";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
@@ -75,7 +79,7 @@ const FeatureSlide = ({ item, theme }) => {
               color: theme.text,
               fontSize: 28,
               lineHeight: 46,
-              fontFamily: "serif",
+              fontFamily: fontLoaded ? "ScheherazadeNew_400Regular" : "serif",
             }}
           >
             وَذَكِّرْ فَإِنَّ الذِّكْرَى تَنْفَعُ الْمُؤْمِنِينَ
@@ -145,6 +149,7 @@ const FeatureSlide = ({ item, theme }) => {
 };
 
 export default function OnboardingScreen() {
+  const [fontLoaded] = useFonts({ ScheherazadeNew_400Regular });
   const router = useRouter();
   const { theme } = useTheme();
   const [activeIndex, setActiveIndex] = useState(0);
