@@ -1,3 +1,4 @@
+import { Amiri_700Bold, useFonts } from "@expo-google-fonts/amiri";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -19,6 +20,7 @@ import { pullUserDataFromCloud } from "../services/cloudSyncService";
 import { isSupabaseConfigured } from "../services/supabaseClient";
 
 export default function AuthScreen() {
+  useFonts({ Amiri_700Bold });
   const { theme } = useTheme();
   const router = useRouter();
   const { show, showAlert } = useToast();
@@ -253,7 +255,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontFamily: "Amiri-Bold",
+    fontFamily: "Amiri_700Bold",
     textAlign: "center",
     marginBottom: 8,
   },
