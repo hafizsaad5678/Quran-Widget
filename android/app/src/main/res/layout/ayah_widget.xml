@@ -4,9 +4,19 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_bg"
-    android:gravity="center"
+    android:gravity="top|center_horizontal"
     android:orientation="vertical"
     android:padding="10dp">
+
+    <TextView
+        android:id="@+id/widget_surah"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="6dp"
+        android:text="Al-Fatiha : 1"
+        android:textColor="#000000"
+        android:textSize="12sp"
+        android:textStyle="bold" />
 
     <TextView
         android:id="@+id/widget_arabic"
@@ -14,6 +24,9 @@
         android:layout_height="wrap_content"
         android:ellipsize="end"
         android:gravity="center"
+        android:includeFontPadding="true"
+        android:lineSpacingMultiplier="1.35"
+        android:paddingTop="4dp"
         android:maxLines="3"
         android:text="بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ"
         android:textColor="#111111"
@@ -32,14 +45,5 @@
         android:textColor="#333333"
         android:textSize="14sp" />
 
-    <TextView
-        android:id="@+id/widget_surah"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:text="Al-Fatiha : 1"
-        android:textColor="#000000"
-        android:textSize="12sp"
-        android:textStyle="bold" />
 
 </LinearLayout>

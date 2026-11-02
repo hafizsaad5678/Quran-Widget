@@ -4,12 +4,12 @@ Quran Daily Ayah is an Expo Router React Native app with NativeWind styling, off
 
 ## Tech Stack
 
-- Expo SDK 54
-- React Native 0.81
+- Expo SDK 58
+- React Native 0.88
 - Expo Router (routes under src/app)
 - NativeWind + Tailwind config
 - AsyncStorage for offline-first local data
-- Supabase JS client for MCQ + cloud user data sync
+- Supabase code retained for a future cloud build, disabled in the current offline build
 - Existing native integrations (widget + notifications) via JS services only
 
 ## Architecture
@@ -30,10 +30,9 @@ Quran Daily Ayah is an Expo Router React Native app with NativeWind styling, off
 - Situation definitions: src/constants/situations.js
 - Translation profiles: src/constants/translations.js
 
-### Cloud Layer (Supabase)
+### Retained Cloud Layer (disabled)
 
 - Client: src/services/supabaseClient.js
-- MCQ service: src/services/mcqService.js
 - Cloud sync service: src/services/cloudSyncService.js
 - SQL migration: supabase/migrations/20260327_user_data_and_mcq.sql
 
@@ -47,23 +46,23 @@ Quran Daily Ayah is an Expo Router React Native app with NativeWind styling, off
 - Settings
 - About
 - Situation Selector (new)
-- Situation Detail with MCQ interaction (new)
+- Situation Detail with offline guidance and audio
 
-### App.md Concept Screens (first pass)
+### Guided and utility screens
 
-- Pause Mode
-- Countdown
+- Morning Calm (three-step offline journey)
+- Countdown reading sessions
 - Collections
 - Stats
-- Widget Gallery
+- Widget Studio
 
 These are implemented as route screens and linked from Home quick actions.
 
 ### Local + Cloud Behavior
 
 - Offline-first by default: all user actions persist locally first.
-- Background cloud sync is triggered from user mutations (favorites, notes, history, streak, settings).
-- If Supabase runtime env vars are missing, app continues in local-only mode.
+- The current product is offline-only: favorites, notes, history, collections, settings and progress stay on-device.
+- Supabase auth/sync code remains disabled behind `CLOUD_ENABLED = false`.
 
 ### Reminder UX
 
@@ -81,6 +80,11 @@ App integration is done only through existing service interfaces:
 - src/services/widgetProvider.js
 - src/services/notificationService.js
 
+The checked-in `android/` project is the native source of truth because it
+contains the home-screen widget. Native settings should be changed there (or
+intentionally regenerated with Expo prebuild); app.json does not automatically
+rewrite these checked-in native files.
+
 ## Supabase Tables
 
 Migration file creates/ensures:
@@ -95,7 +99,7 @@ Migration file creates/ensures:
 - mcq_options
 - mcq_attempts
 
-Also includes indexes and permissive per-device RLS policies for anonymous mode.
+These migrations are retained for a future cloud-enabled build and are not used by the current offline build.
 
 ## Environment Variables
 
@@ -124,7 +128,8 @@ npx expo run:android
 Lint:
 
 ```bash
-npx eslint src/**/*.js src/**/*.jsx app/**/*.js
+npm run lint
+npx tsc --noEmit
 ```
 
 ## Notes

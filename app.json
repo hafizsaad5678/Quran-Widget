@@ -6,20 +6,17 @@
     "orientation": "portrait",
     "scheme": "qurandailyayah",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "icon": "./assets/Quran Widget Logo.png",
-    "splash": {
-      "image": "./assets/Quran Widget Logo.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#D4AF37"
-    },
     "android": {
-      "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.qurandaily.ayah",
       "adaptiveIcon": {
         "foregroundImage": "./assets/Quran Widget Logo.png"
-      }
+      },
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.SYSTEM_ALERT_WINDOW"
+      ]
     },
     "web": {
       "output": "static"
@@ -34,10 +31,31 @@
       ],
       "expo-font",
       "expo-sharing",
-      "expo-splash-screen",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#000000",
+          "image": "./assets/Quran Widget Logo.png",
+          "imageWidth": 200,
+          "resizeMode": "contain"
+        }
+      ],
       "expo-status-bar",
       "expo-audio",
-      "expo-asset"
+      "expo-asset",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#E6CA72"
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Your location is used on your device only, to point the compass towards the Qibla."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
